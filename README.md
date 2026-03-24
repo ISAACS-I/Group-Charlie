@@ -1,92 +1,93 @@
-# EventHub 🎟️
+# Events Hub 🎉
 
-EventHub is a full-stack event management system that allows users to discover, register, and attend events using QR codes, while organisers can create and manage events.
+A modern event discovery and management platform that allows users to explore, register, and manage events using a clean and responsive interface.
 
 ---
 
 ## 🚀 Features
 
-### 👤 Users
+### 👤 User Features
 
-* Browse events
-* Register for events
-* Receive QR codes for entry
-* View bookings and event details
+* Browse upcoming events
+* Search and filter events by category, date, and location
+* View featured events
+* Responsive and intuitive UI
 
-### 🛠️ Admin / Organisers
+### 🛠️ Organiser Features
 
-* Create and manage events
-* View analytics (attendees, performance)
-* Scan QR codes for check-in
-* Manage attendees
-
----
-
-## 🧱 Tech Stack
-
-### Frontend
-
-* React
-* Tailwind CSS / Custom CSS
-
-### Backend
-
-* Node.js
-* Express.js
-
-### Database
-
-* MongoDB Atlas
+* View and manage events
+* Dashboard with event statistics
+* Quick access to event management tools
 
 ---
 
-## 📂 Project Structure
+## 📂 Implemented Pages (Frontend Scope)
+
+This project currently includes the following fully implemented frontend pages:
+
+* User Home Page (`/home`)
+* Organiser/Admin Home Page (`/organiser-home`)
+* Browse Events Page (`/browse-events`)
+
+---
+
+## ⚠️ Notes
+
+* Some routes such as:
+
+  * Event Details
+  * Create Event
+  * My Events
+  * Attendees
+  * Analytics
+  * Settings
+  * Logout
+
+  are placeholders and will be implemented in future development.
+
+---
+
+## 🧠 Technologies Used
+
+* React (with TypeScript)
+* React Router
+* CSS Modules / Custom Styling
+
+---
+
+## 📁 Project Structure
 
 ```
-eventhub/
-├── client/        # React frontend
-├── server/        # Express backend
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── routes/
-│   ├── hooks/
-│   ├── api/
-│   ├── assets/
-│   └── data/
+src/
+  components/
+    events/
+    layout/
+    ui/
+  pages/
+    user/
+    admin/
+  styles/
+  types/
 ```
 
 ---
 
-## 🔐 Authentication & Roles
+## ▶️ Running the Project
 
-* Users can register and log in
-* Admin privileges can be assigned
-* Role-based access (user vs admin)
-
----
-
-## 📱 QR Code System
-
-* Each booking generates a unique QR code
-* QR code is scanned at event entry
-* Enables fast and secure check-in
+```bash
+npm install
+npm run dev
+```
 
 ---
 
-## ⚙️ Setup (Coming Soon)
+## 👥 Contribution
 
-Instructions to run the project locally will be added.
-
----
-
-## 📌 Status
-
-🚧 Currently in development (Frontend UI + Backend setup)
+This project is part of a collaborative development effort.
+Frontend for core pages has been completed, and additional features will be integrated by other contributors.
 
 ---
 
-## 👨‍💻 Author
+## ✨ Status
 
-* Isago Isaacs
-
+Frontend for the main user and organiser flows is complete and ready for backend integration.

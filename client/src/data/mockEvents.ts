@@ -1,0 +1,65 @@
+// src/data/mockEvents.ts
+import type { EventItem } from "../types";
+
+export const featuredEvents: EventItem[] = [
+  {
+    id: 1,
+    category: "Technology",
+    categoryClass: "tech",
+    registered: "245 Registered",
+    title: "Developer Meetup",
+    description: "Connect with developers and explore current trends in software and innovation.",
+    date: "March 28, 2026",
+    time: "5:00 PM - 8:00 PM",
+    location: "Innovation Hub",
+    price: "Free",
+    imageClass: "tech-image",
+    buttonText: "View Event",
+  },
+  {
+    id: 2,
+    category: "Business",
+    categoryClass: "business",
+    registered: "134 Registered",
+    title: "Women in Business Forum",
+    description: "Network with founders, professionals, and aspiring leaders across industries.",
+    date: "April 2, 2026",
+    time: "10:00 AM - 2:00 PM",
+    location: "Masa Square",
+    price: "P50",
+    imageClass: "business-image",
+    buttonText: "View Event",
+  },
+];
+
+export const browseEvents: EventItem[] = [
+  {
+    id: 1,
+    category: "Technology",
+    categoryClass: "tech",
+    registered: "245 Registered",
+    title: "Tech Innovation Summit 2026",
+    description: "Join industry leaders for a day of innovation, networking, and cutting-edge technology.",
+    date: "March 25, 2026",
+    time: "9:00 AM - 6:00 PM",
+    location: "Central Business District",
+    price: "Free",
+    tag: "Popular",
+    imageClass: "tech-image",
+    buttonText: "View Event",
+  },
+  {
+    id: 2,
+    category: "Arts & Culture",
+    categoryClass: "art",
+    registered: "89 Registered",
+    title: "Contemporary Art Exhibition",
+    description: "Experience the finest contemporary art from emerging and established local artists.",
+    date: "March 28, 2026",
+    time: "2:00 PM - 8:00 PM",
+    location: "Thapong Café & Deli",
+    price: "P25",
+    imageClass: "art-image",
+    buttonText: "View Event",
+  },
+];
