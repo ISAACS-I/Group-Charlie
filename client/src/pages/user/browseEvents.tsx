@@ -1,259 +1,319 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/layout/sidebar";
-import Topbar from "../../components/layout/topbar";
-import Footer from "../../components/layout/footer";
-import EventGrid from "../../components/events/eventGrid";
-import type { EventItem, SidebarLink, SidebarSection } from "../../types";
-import "../../styles/pages/browseEvents.css";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import EventGrid from "../../components/events/EventGrid";
+import { featuredEvents } from "../../data/mockEvents";
+import type { EventItem } from "../../types";
+
+const CATEGORIES = [
+  "All",
+  "Technology",
+  "Music",
+  "Business",
+  "Sports",
+  "Community",
+  "Arts & Culture",
+  "Food & Drink",
+];
+
+const DATES = ["All Dates", "This Week", "This Month", "Next Month"];
+const LOCATIONS = ["All Locations", "Gaborone", "Francistown", "Maun", "Serowe"];
+
+type ViewMode = "grid" | "list";
+
+function matchesDateFilter(eventDate: string | undefined, filter: string) {
+  if (!eventDate || filter === "All Dates") return true;
+
+  const lower = eventDate.toLowerCase();
+
+  if (filter === "This Week") {
+    return lower.includes("march 25, 2026") || lower.includes("march 28, 2026");
+  }
+
+  if (filter === "This Month") {
+    return lower.includes("march");
+  }
+
+  if (filter === "Next Month") {
+    return lower.includes("april");
+  }
+
+  return true;
+}
 
 export default function BrowseEvents() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [selectedDate, setSelectedDate] = useState("All Dates");
-  const [selectedLocation, setSelectedLocation] = useState("All Locations");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const sections: SidebarSection[] = [
-    {
-      label: "Explore",
-      links: [
-        { label: "Home", href: "/home" },
-        { label: "Browse Events", href: "/browse-events", active: true },
-        { label: "Categories", href: "/browse-events" },
-      ],
-    },
-    {
-      label: "Personal",
-      links: [
-        { label: "My Bookings", href: "/my-bookings" },
-        { label: "Saved Events", href: "/saved-events" },
-        { label: "QR Codes", href: "/qr-codes" },
-      ],
-    },
-  ];
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "All Categories");
+  const [date, setDate] = useState(searchParams.get("date") ?? "All Dates");
+  const [location, setLocation] = useState(searchParams.get("location") ?? "All Locations");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const bottomLinks: SidebarLink[] = [
-    { label: "Settings", href: "/settings" },
-    { label: "Logout", href: "/logout" },
-  ];
-
-  const events: EventItem[] = [
+  const allEvents: EventItem[] = [
+    ...featuredEvents,
     {
-      id: 1,
-      category: "Technology",
-      categoryClass: "tech",
-      registered: "245 Registered",
-      title: "Tech Innovation Summit 2026",
-      description:
-        "Join industry leaders for a day of innovation, networking, and cutting-edge technology.",
-      date: "March 25, 2026",
-      time: "9:00 AM - 6:00 PM",
-      location: "Central Business District",
-      price: "Free",
-      tag: "Popular",
-      imageClass: "tech-image",
-      buttonText: "View Event",
-    },
-    {
-      id: 2,
+      id: "4",
       category: "Arts & Culture",
-      categoryClass: "art",
       registered: "89 Registered",
       title: "Contemporary Art Exhibition",
       description:
         "Experience the finest contemporary art from emerging and established local artists.",
       date: "March 28, 2026",
       time: "2:00 PM - 8:00 PM",
-      location: "Thapong Café & Deli",
-      price: "P25",
-      imageClass: "art-image",
-      buttonText: "View Event",
+      location: "Thapong Cafe & Deli",
+      imageBg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      buttonText: "Register Now",
     },
     {
-      id: 3,
-      category: "Business",
-      categoryClass: "business",
-      registered: "134 Registered",
-      title: "Women in Business Forum",
+      id: "5",
+      category: "Sports",
+      registered: "432 Registered",
+      title: "FNB Kazungula Bridge Marathon 2026",
       description:
-        "Network with founders, professionals, and aspiring leaders across industries.",
-      date: "April 2, 2026",
-      time: "10:00 AM - 2:00 PM",
-      location: "Masa Square",
-      price: "P50",
-      imageClass: "business-image",
-      buttonText: "View Event",
+        "Join thousands of runners in the annual city marathon for health and community.",
+      date: "April 10, 2026",
+      time: "6:00 AM - 12:00 PM",
+      location: "Kazungula Bridge",
+      tag: "Popular",
+      imageBg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      buttonText: "Register Now",
     },
     {
-      id: 4,
+      id: "6",
       category: "Music",
-      categoryClass: "music",
-      registered: "98 Registered",
-      title: "Live Acoustic Session",
+      registered: "678 Registered",
+      title: "Lekompo Summer Music Festival",
       description:
-        "Enjoy an intimate evening of acoustic performances from talented local artists.",
-      date: "April 5, 2026",
-      time: "7:00 PM - 10:00 PM",
-      location: "Gaborone Club",
-      price: "P80",
-      imageClass: "music-image",
-      buttonText: "View Event",
+        "Three days of incredible live performances from top lekompo artists.",
+      date: "November 15-17, 2026",
+      time: "12:00 PM - 11:00 PM",
+      location: "Serowe",
+      imageBg: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+      buttonText: "Register Now",
+    },
+    {
+      id: "7",
+      category: "Food & Drink",
+      registered: "34 Registered",
+      title: "Gourmet Cooking Workshop",
+      description:
+        "Learn professional cooking techniques from Chef Seeletso in hands-on sessions.",
+      date: "July 5, 2026",
+      time: "3:00 PM - 7:00 PM",
+      location: "Cresta Hotel and Restaurant",
+      imageBg: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+      buttonText: "Register Now",
     },
   ];
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (search.trim()) params.set("search", search.trim());
+    if (category !== "All Categories") params.set("category", category);
+    if (date !== "All Dates") params.set("date", date);
+    if (location !== "All Locations") params.set("location", location);
+
+    setSearchParams(params, { replace: true });
+  }, [search, category, date, location, setSearchParams]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+
+    return allEvents.filter((e) => {
+      const matchesSearch =
+        !q ||
+        e.title.toLowerCase().includes(q) ||
+        (e.description ?? "").toLowerCase().includes(q) ||
+        (e.location ?? "").toLowerCase().includes(q) ||
+        (e.category ?? "").toLowerCase().includes(q);
+
       const matchesCategory =
-        selectedCategory === "All Categories" || event.category === selectedCategory;
+        category === "All Categories" || e.category === category;
 
       const matchesLocation =
-        selectedLocation === "All Locations" || event.location === selectedLocation;
+        location === "All Locations" ||
+        (e.location ?? "").toLowerCase().includes(location.toLowerCase());
 
-      const matchesDate =
-        selectedDate === "All Dates" ||
-        (selectedDate === "This Week" &&
-          (event.date?.includes("March 25, 2026") || event.date?.includes("March 28, 2026"))) ||
-        (selectedDate === "Next Week" &&
-          (event.date?.includes("April 2, 2026") || event.date?.includes("April 5, 2026")));
+      const matchesDate = matchesDateFilter(e.date, date);
 
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        event.title.toLowerCase().includes(search) ||
-        (event.description ?? "").toLowerCase().includes(search) ||
-        (event.location ?? "").toLowerCase().includes(search) ||
-        (event.category ?? "").toLowerCase().includes(search);
-
-      return matchesCategory && matchesLocation && matchesDate && matchesSearch;
+      return matchesSearch && matchesCategory && matchesLocation && matchesDate;
     });
-  }, [events, selectedCategory, selectedDate, selectedLocation, searchTerm]);
+  }, [allEvents, search, category, date, location]);
 
-  const handleEventAction = (event: EventItem) => {
-    navigate(`/events/${event.id}`);
-  };
+  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
 
   return (
-    <div className="app">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        sections={sections}
-        bottomLinks={bottomLinks}
-      />
+    <DashboardLayout
+      title="Browse Events"
+      subtitle="Discover and register for upcoming events using your unique QR-based registration."
+      showSponsor
+    >
+      <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-8">
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold text-white">Discover Amazing Events</h2>
+          <p className="mt-1 text-sm text-indigo-100">
+            Register once, attend multiple events with your unique QR code.
+          </p>
 
-      <main className="main">
-        <Topbar
-          title="Browse Events"
-          subtitle="Discover and register for upcoming events using your unique QR-based registration."
-          onMenuClick={() => setSidebarOpen(true)}
-          showSponsor
-        />
-
-        <section className="hero-banner">
-          <div className="hero-content">
-            <h2>Discover Amazing Events</h2>
-            <p>Register once, attend multiple events with your unique QR code.</p>
-
-            <div className="hero-pills">
-              <div className="hero-pill">
-                <span className="hero-pill-title">Quick Check-in</span>
-                <span className="hero-pill-sub">Scan & Go</span>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {[
+              { label: "Quick Check-in", sub: "Scan & Go" },
+              { label: "Secure Registration", sub: "One-time Setup" },
+            ].map((badge) => (
+              <div key={badge.label} className="rounded-xl bg-white/20 px-4 py-2.5 backdrop-blur-sm">
+                <p className="text-xs text-indigo-100">{badge.label}</p>
+                <p className="text-sm font-semibold text-white">{badge.sub}</p>
               </div>
-              <div className="hero-pill">
-                <span className="hero-pill-title">Secure Registration</span>
-                <span className="hero-pill-sub">One-time Setup</span>
-              </div>
-            </div>
+            ))}
           </div>
-        </section>
+        </div>
 
-        <section className="filters-card">
-          <div className="filter-group">
-            <label>Category</label>
+        <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10" />
+        <div className="absolute -right-4 top-16 h-24 w-24 rounded-full bg-white/10" />
+      </section>
+
+      <section className="mb-8 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Category</label>
             <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             >
-              <option>All Categories</option>
-              <option>Technology</option>
-              <option>Arts & Culture</option>
-              <option>Business</option>
-              <option>Music</option>
+              {CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
             </select>
           </div>
 
-          <div className="filter-group">
-            <label>Date</label>
-            <select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
-              <option>All Dates</option>
-              <option>This Week</option>
-              <option>Next Week</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Location</label>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Date</label>
             <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             >
-              <option>All Locations</option>
-              <option>Central Business District</option>
-              <option>Thapong Café & Deli</option>
-              <option>Masa Square</option>
-              <option>Gaborone Club</option>
+              {DATES.map((d) => (
+                <option key={d}>{d}</option>
+              ))}
             </select>
           </div>
 
-          <div className="filter-group">
-            <label>Search</label>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Location</label>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            >
+              {LOCATIONS.map((l) => (
+                <option key={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Search</label>
             <input
               type="text"
               placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="section-head">
-          <div>
-            <h2>Upcoming Events</h2>
-            <p>{filteredEvents.length} event(s) found</p>
-          </div>
+      <section>
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-bold text-gray-900">
+            Upcoming Events
+            <span className="ml-2 text-sm font-normal text-gray-400">({filtered.length})</span>
+          </h2>
 
-          <div className="view-toggle">
-            <button
-              className={`toggle-btn ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              Grid
-            </button>
-            <button
-              className={`toggle-btn ${viewMode === "list" ? "active" : ""}`}
-              onClick={() => setViewMode("list")}
-            >
-              List
-            </button>
+          <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+            {(["grid", "list"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
+                  viewMode === mode
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
           </div>
-        </section>
+        </div>
 
-        {filteredEvents.length > 0 ? (
-          <div className={viewMode === "list" ? "list-view-wrapper" : ""}>
-            <EventGrid events={filteredEvents} onEventAction={handleEventAction} />
-          </div>
+        {filtered.length > 0 ? (
+          viewMode === "grid" ? (
+            <EventGrid events={filtered} onEventAction={handleEventAction} />
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex cursor-pointer items-center gap-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                  onClick={() => handleEventAction(event)}
+                >
+                  <div
+                    className="h-16 w-16 flex-shrink-0 rounded-xl"
+                    style={{
+                      background:
+                        event.imageBg ?? "linear-gradient(135deg,#e0e7ff,#c7d2fe)",
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      {event.category && (
+                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">
+                          {event.category}
+                        </span>
+                      )}
+                      {event.registered && (
+                        <span className="text-xs text-gray-400">• {event.registered}</span>
+                      )}
+                    </div>
+                    <h3 className="truncate text-base font-semibold text-gray-900">
+                      {event.title}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {event.date}
+                      {event.location ? ` • ${event.location}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEventAction(event);
+                    }}
+                    className="flex-shrink-0 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                  >
+                    {event.buttonText ?? "Register Now"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
         ) : (
-          <div className="empty-state">
-            <h3>No events found</h3>
-            <p>Try changing your search text or filters.</p>
+          <div className="py-20 text-center">
+            <p className="text-base font-medium text-gray-600">No events found</p>
+            <p className="mt-1 text-sm text-gray-400">
+              Try adjusting your filters or search term.
+            </p>
           </div>
         )}
-
-        <Footer />
-      </main>
-    </div>
+      </section>
+    </DashboardLayout>
   );
 }

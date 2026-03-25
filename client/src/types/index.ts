@@ -3,7 +3,6 @@ export type UserRole = "user" | "admin";
 export interface SidebarLink {
   label: string;
   href: string;
-  active?: boolean;
 }
 
 export interface SidebarSection {
@@ -12,17 +11,17 @@ export interface SidebarSection {
 }
 
 export interface EventItem {
-  id: number | string;
-  category?: string;
-  categoryClass?: string;
-  registered?: string;
+  id: string;
   title: string;
   description?: string;
+  category?: string;
+  registered?: string;
   date?: string;
   time?: string;
   location?: string;
   price?: string;
   tag?: string;
-  imageClass?: string;
+  status?: "Active" | "Upcoming" | "Draft";
+  imageBg?: string;
   buttonText?: string;
 }

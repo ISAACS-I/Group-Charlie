@@ -1,141 +1,138 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/layout/sidebar";
-import Topbar from "../../components/layout/topbar";
-import Footer from "../../components/layout/footer";
-import EventGrid from "../../components/events/eventGrid";
-import StatCard from "../../components/ui/statCard";
-import type { EventItem, SidebarLink, SidebarSection } from "../../types";
-import "../../styles/pages/adminHome.css";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import EventGrid from "../../components/events/EventGrid";
+import StatCard from "../../components/ui/StatCard";
+import { organiserEvents } from "../../data/mockEvents";
+import type { EventItem } from "../../types";
+
+const QUICK_ACTIONS = [
+  {
+    title: "Create Event",
+    desc: "Start a new event listing with dates, venue, and ticket details.",
+    href: "/create-event",
+  },
+  {
+    title: "Manage Attendees",
+    desc: "Review registrations and monitor attendance activity.",
+    href: "/attendees",
+  },
+  {
+    title: "View Analytics",
+    desc: "Check performance, engagement, and event reach.",
+    href: "/analytics",
+  },
+];
 
 export default function OrganiserHome() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const navigate = useNavigate();
 
-  const sections: SidebarSection[] = [
-    {
-      label: "Explore",
-      links: [
-        { label: "Home", href: "/organiser-home" },
-        { label: "Browse Events", href: "/browse-events" },
-        { label: "Categories", href: "/browse-events" },
-      ],
-    },
-    {
-      label: "Personal",
-      links: [
-        { label: "My Bookings", href: "/my-bookings" },
-        { label: "Saved Events", href: "/saved-events" },
-        { label: "QR Codes", href: "/qr-codes" },
-      ],
-    },
-    {
-      label: "Organiser",
-      links: [
-        { label: "Overview", href: "/organiser-home", active: true },
-        { label: "Create Event", href: "/create-event" },
-        { label: "My Events", href: "/my-events" },
-        { label: "Attendees", href: "/attendees" },
-        { label: "Analytics", href: "/analytics" },
-      ],
-    },
-  ];
-
-  const bottomLinks: SidebarLink[] = [
-    { label: "Settings", href: "/settings" },
-    { label: "Logout", href: "/logout" },
-  ];
-
-  const myEvents: EventItem[] = [
-    {
-      id: 1,
-      category: "Active",
-      title: "Developer Meetup",
-      description: "Currently open and attracting registrations.",
-      date: "March 28, 2026",
-      time: "5:00 PM - 8:00 PM",
-      location: "Innovation Hub",
-      imageClass: "tech-image",
-      buttonText: "Manage Event",
-    },
-    {
-      id: 2,
-      category: "Upcoming",
-      title: "Women in Business Forum",
-      description: "Scheduled and ready for attendee engagement.",
-      date: "April 2, 2026",
-      time: "10:00 AM - 2:00 PM",
-      location: "Masa Square",
-      imageClass: "business-image",
-      buttonText: "Manage Event",
-    },
-  ];
-
-  const handleEventAction = (event: EventItem) => {
-    navigate(`/events/${event.id}`);
-  };
+  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
 
   return (
-    <div className="app">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        sections={sections}
-        bottomLinks={bottomLinks}
-      />
+    <DashboardLayout
+      title="Welcome Back, Organiser"
+      subtitle="Manage your events, track engagement, and create new experiences from one place."
+      showSponsor
+    >
+      <section className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="rounded-2xl bg-indigo-600 p-7 md:col-span-2">
+          <span className="text-xs font-semibold uppercase tracking-widest text-indigo-200">
+            Quick Action
+          </span>
+          <h2 className="mt-2 text-xl font-bold leading-snug text-white">
+            Create and Manage Events Easily
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-indigo-200">
+            Launch a new event, update existing ones, and keep track of attendee activity
+            without leaving your dashboard.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/create-event")}
+            className="mt-5 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
+          >
+            Create Event
+          </button>
+        </div>
 
-      <main className="main">
-        <Topbar
-          title="Welcome Back, Organiser"
-          subtitle="Manage your events, track engagement, and create new experiences from one place."
-          onMenuClick={() => setSidebarOpen(true)}
-          showSponsor
-        />
+        <StatCard value="08" label="Active Events" note="2 more than last month" />
+        <StatCard value="1,248" label="Total Attendees" note="Across all current events" />
+        <StatCard value="87%" label="Engagement Rate" note="Strong attendee interaction" />
+      </section>
 
-        <section className="hero-grid admin-hero-grid">
-          <div className="hero-card large-card">
-            <p className="small-tag">Quick Action</p>
-            <h2>Create and Manage Events Easily</h2>
-            <p>
-              Launch a new event, update existing ones, and keep track of attendee
-              activity without leaving your dashboard.
-            </p>
-            <button onClick={() => navigate("/create-event")}>Create Event</button>
-          </div>
+      <section className="mb-10">
+        <h2 className="mb-4 text-lg font-bold text-gray-900">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              onClick={() => navigate(action.href)}
+              className="rounded-2xl border border-gray-100 bg-white p-6 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <h3 className="mb-1 text-base font-semibold text-gray-900">{action.title}</h3>
+              <p className="text-sm leading-relaxed text-gray-500">{action.desc}</p>
+            </button>
+          ))}
+        </div>
+      </section>
 
-          <StatCard value="08" label="Active Events" />
-          <StatCard value="1,248" label="Total Attendees" />
-          <StatCard value="87%" label="Engagement Rate" />
-        </section>
+      <section className="mb-10">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">My Events</h2>
+          <button
+            type="button"
+            onClick={() => navigate("/my-events")}
+            className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
+          >
+            See all
+          </button>
+        </div>
 
-        <section className="content-section">
-          <div className="section-head">
-            <h2>My Events</h2>
+        {organiserEvents.length > 0 ? (
+          <EventGrid events={organiserEvents} onEventAction={handleEventAction} />
+        ) : (
+          <div className="py-16 text-center">
+            <p className="text-base font-medium text-gray-600">No events created yet</p>
+            <p className="mt-1 text-sm text-gray-400">Start by creating your first event.</p>
             <button
               type="button"
-              className="link-btn"
-              onClick={() => navigate("/my-events")}
+              onClick={() => navigate("/create-event")}
+              className="mt-4 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
             >
-              See all
+              Create Event
             </button>
           </div>
+        )}
+      </section>
 
-          {myEvents.length > 0 ? (
-            <EventGrid events={myEvents} onEventAction={handleEventAction} />
-          ) : (
-            <div className="empty-state">
-              <h3>No events created yet</h3>
-              <p>Start by creating your first event.</p>
-              <button className="primary-btn" onClick={() => navigate("/create-event")}>
-                Create Event
-              </button>
+      <section>
+        <h2 className="mb-4 text-lg font-bold text-gray-900">Organiser Insights</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            {
+              title: "Attendance Overview",
+              desc: "Track how many people are registering and attending across your active events.",
+            },
+            {
+              title: "Event Performance",
+              desc: "See which events are gaining the most interest and where engagement is strongest.",
+            },
+            {
+              title: "Management Tools",
+              desc: "Access event creation, attendee tracking, and analytics from the same workspace.",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+            >
+              <h3 className="mb-2 text-base font-semibold text-gray-900">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-gray-500">{item.desc}</p>
             </div>
-          )}
-        </section>
-
-        <Footer />
-      </main>
-    </div>
+          ))}
+        </div>
+      </section>
+    </DashboardLayout>
   );
 }
