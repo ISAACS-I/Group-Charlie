@@ -3,6 +3,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Home from "../pages/user/Home";
 import BrowseEvents from "../pages/user/BrowseEvents";
 import OrganiserHome from "../pages/organiser/OrganiserHome";
+import UserSignup from "../pages/authentication/UserSignUp";
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
@@ -18,6 +19,7 @@ export default function AppRouter() {
       <Route path="/home" element={<Home />} />
       <Route path="/browse-events" element={<BrowseEvents />} />
       <Route path="/login" element={<Placeholder name="Login" />} />
+      <Route path="/signup" element={<UserSignup />} />
 
       <Route
         path="/my-bookings"

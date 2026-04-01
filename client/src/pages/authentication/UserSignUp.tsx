@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Zap, Users, Eye, EyeOff } from "lucide-react";
 
@@ -126,7 +126,7 @@ export default function SignupPage() {
 
 /* Helper Components for cleanliness */
 
-function FeatureItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function FeatureItem({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
   return (
     <div className="flex gap-5">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-indigo-200">
