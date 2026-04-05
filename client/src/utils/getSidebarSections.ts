@@ -7,7 +7,7 @@ export function getSidebarSections(isAdmin: boolean): SidebarSection[] {
       links: [
         { label: "Home", href: "/home" },
         { label: "Browse Events", href: "/browse-events" },
-        { label: "Categories", href: "/browse-events" },
+        { label: "Categories", href: "/categories" },
       ],
     },
     {

@@ -20,6 +20,7 @@ export default function AppRouter() {
       <Route path="/browse-events" element={<BrowseEvents />} />
       <Route path="/login" element={<Placeholder name="Login" />} />
       <Route path="/signup" element={<UserSignup />} />
+      <Route path="/categories" element={<Placeholder name="Categories" />} />
 
       <Route
         path="/my-bookings"
