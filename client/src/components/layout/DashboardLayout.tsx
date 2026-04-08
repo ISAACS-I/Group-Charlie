@@ -39,7 +39,7 @@ export default function DashboardLayout({
   if (isLoading) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gray-50">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -48,7 +48,7 @@ export default function DashboardLayout({
         onLogout={handleLogout}
       />
 
-      <div className="flex min-h-screen min-w-0 flex-col lg:pl-60">
+      <div className="flex min-h-screen flex-col">
         <Topbar
           title={title}
           subtitle={subtitle}
