@@ -3,7 +3,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import Home from "../pages/user/Home";
 import BrowseEvents from "../pages/user/BrowseEvents";
 import OrganiserHome from "../pages/organiser/OrganiserHome";
+import UserLogin from "../pages/authentication/UserLogIn";
 import UserSignup from "../pages/authentication/UserSignUp";
+import Analytics from "../pages/organiser/Analytics";
+import Settings from "../pages/settings/Settings";
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
@@ -14,14 +17,16 @@ const Placeholder = ({ name }: { name: string }) => (
 export default function AppRouter() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Navigate to="/home" replace />} />
-
       <Route path="/home" element={<Home />} />
       <Route path="/browse-events" element={<BrowseEvents />} />
-      <Route path="/login" element={<Placeholder name="Login" />} />
+      <Route path="/login" element={<UserLogin />} />
       <Route path="/signup" element={<UserSignup />} />
       <Route path="/categories" element={<Placeholder name="Categories" />} />
+      <Route path="/events/:id" element={<Placeholder name="Event Detail" />} />
 
+      {/* Protected User Routes */}
       <Route
         path="/my-bookings"
         element={
@@ -50,12 +55,12 @@ export default function AppRouter() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <Placeholder name="Settings" />
+            <Settings />
           </ProtectedRoute>
         }
       />
-      <Route path="/events/:id" element={<Placeholder name="Event Detail" />} />
 
+      {/* Protected Organiser Routes */}
       <Route
         path="/organiser-home"
         element={
@@ -92,11 +97,12 @@ export default function AppRouter() {
         path="/analytics"
         element={
           <ProtectedRoute requireAdmin>
-            <Placeholder name="Analytics" />
+            <Analytics />
           </ProtectedRoute>
         }
       />
 
+      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );

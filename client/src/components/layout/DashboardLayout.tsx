@@ -1,15 +1,11 @@
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Footer from "./Footer";
-<<<<<<< HEAD
 import { getSidebarSections } from "../../utils/getSidebarSections";
 import { useAuth } from "../../context/AuthContext";
 import type { SidebarLink } from "../../types";
-=======
-import { useAuth } from "../../context/AuthContext";
-import type { SidebarLink, SidebarSection } from "../../types";
->>>>>>> 126beae (implemented settings, qr, and event pages)
 
 interface DashboardLayoutProps {
   title: string;
@@ -25,7 +21,8 @@ export default function DashboardLayout({
   showSponsor = false,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { role, isAdmin, isLoading, setRole, clearRole } = useAuth();
+  const { role, isAdmin, isLoading, setRole, clearRole, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const sections = getSidebarSections(isAdmin);
 
@@ -33,6 +30,11 @@ export default function DashboardLayout({
     { label: "Settings", href: "/settings" },
     { label: role ? "Logout" : "Sign in", href: role ? "/logout" : "/login" },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   if (isLoading) return null;
 
@@ -43,9 +45,10 @@ export default function DashboardLayout({
         onClose={() => setSidebarOpen(false)}
         sections={sections}
         bottomLinks={bottomLinks}
+        onLogout={handleLogout}
       />
 
-      <div className="flex min-h-screen min-w-0 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-col lg:pl-60">
         <Topbar
           title={title}
           subtitle={subtitle}
