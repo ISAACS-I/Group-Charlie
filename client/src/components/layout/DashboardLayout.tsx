@@ -2,9 +2,14 @@ import { useState, type ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Footer from "./Footer";
+<<<<<<< HEAD
 import { getSidebarSections } from "../../utils/getSidebarSections";
 import { useAuth } from "../../context/AuthContext";
 import type { SidebarLink } from "../../types";
+=======
+import { useAuth } from "../../context/AuthContext";
+import type { SidebarLink, SidebarSection } from "../../types";
+>>>>>>> 126beae (implemented settings, qr, and event pages)
 
 interface DashboardLayoutProps {
   title: string;
