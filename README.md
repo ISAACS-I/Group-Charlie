@@ -8,6 +8,15 @@ This repository contains the frontend (and future backend) for the EventsHub pla
 
 The following pages are fully functional on the frontend:
 
+### Authentication Pages
+
+* Login
+* Signup
+
+### Shared Page
+
+* Settings
+
 ### User Pages
 
 * Home
@@ -15,7 +24,8 @@ The following pages are fully functional on the frontend:
 
 ### Organiser Pages
 
-* Organiser Home (admin only)
+* Organiser Home 
+* Analytics
 
 ### Shared Features
 
@@ -52,11 +62,14 @@ client/
     context/
     data/
     pages/
+      authenticattion/
       organiser/
       user/
+      settings/
     routes/
     styles/
     types/
+    utilis/
     App.tsx
     main.tsx
 ```
