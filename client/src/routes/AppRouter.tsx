@@ -6,7 +6,7 @@ import OrganiserHome from "../pages/organiser/OrganiserHome";
 import UserSignup from "../pages/authentication/UserSignUp";
 import CreateEvents from "../pages/organiser/CreateEvents";
 import Attendees from "../pages/organiser/Attendees";
-import MyEvents from "../pages/organiser/MyEvents";
+import MyEvents from "../pages/user/MyEvents";
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
