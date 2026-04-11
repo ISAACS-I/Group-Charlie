@@ -3,7 +3,14 @@ import ProtectedRoute from "./ProtectedRoute";
 import Home from "../pages/user/Home";
 import BrowseEvents from "../pages/user/BrowseEvents";
 import OrganiserHome from "../pages/organiser/OrganiserHome";
+<<<<<<< HEAD
 import PaymentPage from "../pages/user/Payment";
+=======
+import UserLogin from "../pages/authentication/UserLogIn";
+import UserSignup from "../pages/authentication/UserSignUp";
+import Analytics from "../pages/organiser/Analytics";
+import Settings from "../pages/settings/Settings";
+>>>>>>> 2cea9e311706acc60b5b4c0a866cfd7e184c5202
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
@@ -14,12 +21,21 @@ const Placeholder = ({ name }: { name: string }) => (
 export default function AppRouter() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Navigate to="/home" replace />} />
-
       <Route path="/home" element={<Home />} />
       <Route path="/browse-events" element={<BrowseEvents />} />
+<<<<<<< HEAD
       <Route path="/login" element={<Placeholder name="Login" />} />
       <Route path="/payment" element={<PaymentPage />} />
+=======
+      <Route path="/login" element={<UserLogin />} />
+      <Route path="/signup" element={<UserSignup />} />
+      <Route path="/categories" element={<Placeholder name="Categories" />} />
+      <Route path="/events/:id" element={<Placeholder name="Event Detail" />} />
+
+      {/* Protected User Routes */}
+>>>>>>> 2cea9e311706acc60b5b4c0a866cfd7e184c5202
       <Route
         path="/my-bookings"
         element={
@@ -48,12 +64,12 @@ export default function AppRouter() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <Placeholder name="Settings" />
+            <Settings />
           </ProtectedRoute>
         }
       />
-      <Route path="/events/:id" element={<Placeholder name="Event Detail" />} />
 
+      {/* Protected Organiser Routes */}
       <Route
         path="/organiser-home"
         element={
@@ -90,11 +106,12 @@ export default function AppRouter() {
         path="/analytics"
         element={
           <ProtectedRoute requireAdmin>
-            <Placeholder name="Analytics" />
+            <Analytics />
           </ProtectedRoute>
         }
       />
 
+      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
