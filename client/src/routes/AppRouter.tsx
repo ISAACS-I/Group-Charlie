@@ -4,6 +4,7 @@ import Home from "../pages/user/Home";
 import BrowseEvents from "../pages/user/BrowseEvents";
 import OrganiserHome from "../pages/organiser/OrganiserHome";
 import PaymentPage from "../pages/user/Payment";
+
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
     {name} — coming soon
