@@ -4,6 +4,14 @@ import EventGrid from "../../components/events/EventGrid";
 import StatCard from "../../components/ui/StatCard";
 import { organiserEvents } from "../../data/mockEvents";
 import type { EventItem } from "../../types";
+import { Link } from "react-router-dom";
+
+<Link
+  to="/create-event"
+  className="mt-5 inline-block rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+>
+  Create Event
+</Link>
 
 const QUICK_ACTIONS = [
   {

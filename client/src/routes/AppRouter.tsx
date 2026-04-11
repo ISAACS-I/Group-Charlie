@@ -4,6 +4,9 @@ import Home from "../pages/user/Home";
 import BrowseEvents from "../pages/user/BrowseEvents";
 import OrganiserHome from "../pages/organiser/OrganiserHome";
 import UserSignup from "../pages/authentication/UserSignUp";
+import CreateEvents from "../pages/organiser/CreateEvents";
+import Attendees from "../pages/organiser/Attendees";
+import MyEvents from "../pages/organiser/MyEvents";
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
@@ -20,6 +23,9 @@ export default function AppRouter() {
       <Route path="/browse-events" element={<BrowseEvents />} />
       <Route path="/login" element={<Placeholder name="Login" />} />
       <Route path="/signup" element={<UserSignup />} />
+      <Route path="/create-events" element={<CreateEvents />} />
+      <Route path="/attendees" element={<Attendees />} />
+      <Route path="/my-events" element={<MyEvents />} />
 
       <Route
         path="/my-bookings"
