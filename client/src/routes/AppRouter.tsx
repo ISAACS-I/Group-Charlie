@@ -8,7 +8,8 @@ import UserLogin from "../pages/authentication/UserLogIn";
 import UserSignup from "../pages/authentication/UserSignUp";
 import Analytics from "../pages/organiser/Analytics";
 import Settings from "../pages/settings/Settings";
-import EventDetails from "../pages/events/EventDetails";
+import EventDetails from "../pages/user/EventDetails";
+import ManageEvent from "../pages/organiser/ManageEvent";
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex h-screen items-center justify-center text-sm text-gray-400">
@@ -28,7 +29,8 @@ export default function AppRouter() {
       <Route path="/login" element={<UserLogin />} />
       <Route path="/signup" element={<UserSignup />} />
       <Route path="/categories" element={<Placeholder name="Categories" />} />
-      <Route path="/events/:id" element={<EventDetails />} />
+      <Route path="/browse-events/:id" element={<EventDetails />} />
+      <Route path="/my-event/:id" element={<ManageEvent />} />
 
       {/* Protected User Routes */}
       <Route
@@ -86,6 +88,14 @@ export default function AppRouter() {
         element={
           <ProtectedRoute requireAdmin>
             <Placeholder name="My Events" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manage-event/:id"
+        element={
+          <ProtectedRoute requireAdmin>
+            <ManageEvent />
           </ProtectedRoute>
         }
       />

@@ -3,7 +3,7 @@ const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth');
 const Booking = require('../models/Booking');
 const Event = require('../models/Event');
-const User = require('../models/User'); // Add this line
+const User = require('../models/User'); 
 
 // GET /api/analytics - Auth bypassed for development
 router.get('/', async (req, res) => {

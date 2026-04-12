@@ -145,7 +145,7 @@ export default function BrowseEvents() {
     });
   }, [search, category, date, location]);
 
-  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
+  const handleEventAction = (event: EventItem) => navigate(`/browse-events/${event.id}`);
 
   return (
     <DashboardLayout
