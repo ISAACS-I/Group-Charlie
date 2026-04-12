@@ -262,7 +262,7 @@ export default function AttendeesPage() {
           {/* ===================== ATTENDEE TABLE ===================== */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Attendee List</h2>
+              <h2 className="text-base font-bold text-gray-900">Attendee List</h2>
               <p className="mt-1 text-sm text-gray-400">
                 Keep track of attendance across your events.
               </p>
@@ -320,7 +320,7 @@ export default function AttendeesPage() {
           <div className="space-y-5">
             {/* Quick Actions */}
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900">Quick Actions</h3>
+              <h3 className="text-base font-bold text-gray-900">Quick Actions</h3>
 
               <div className="mt-4 space-y-3">
                 <ActionButton label="Export Attendee List" />
@@ -331,7 +331,7 @@ export default function AttendeesPage() {
 
             {/* Recent Activity */}
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900">Recent Activity</h3>
+              <h3 className="text-base font-bold text-gray-900">Recent Activity</h3>
 
               <div className="mt-4 space-y-3">
                 {recentActivityData.map((activity) => (
@@ -352,7 +352,7 @@ export default function AttendeesPage() {
 
             {/* Tips */}
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900">Tips</h3>
+              <h3 className="text-base font-bold text-gray-900">Tips</h3>
 
               <ul className="mt-4 list-disc space-y-3 pl-5 text-sm text-gray-500">
                 <li>Check in attendees as they arrive.</li>

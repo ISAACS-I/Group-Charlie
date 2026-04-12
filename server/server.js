@@ -7,7 +7,6 @@ const app = express();
 
 connectDB();
 
-// Simple CORS - allow all for debugging
 app.use(cors({
   origin: '*',
   methods: '*',
@@ -16,14 +15,10 @@ app.use(cors({
 
 app.use(express.json());
 
-const paymentRoutes = require("./routes/payments");
-
-app.use("/api", paymentRoutes);
-
-const PORT = process.env.PORT || 5000;
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/payments', require('./routes/payments'));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

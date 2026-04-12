@@ -1,10 +1,9 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Users, Tag, Wallet, Mail, Phone } from "lucide-react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 export default function EventDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   // Hardcoded for now — will be replaced with API call using `id`
   const event = {
@@ -15,6 +14,7 @@ export default function EventDetails() {
     date: "March 25, 2026",
     time: "9:00 AM - 6:00 PM",
     location: "Molepolole Stadium",
+    directions: "From the main road, turn left at the BP garage. The stadium is the second building on the right.",
     spotsLeft: 247,
     totalSpots: 500,
     price: "P50",
@@ -56,15 +56,25 @@ export default function EventDetails() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
-
-          {/* Image */}
-          <div
-            className="w-full h-56 rounded-2xl shadow-sm"
-            style={{ background: event.imageBg }}
-          />
+          {/* Photo Gallery */}
+          <div className="grid grid-cols-3 gap-2">
+            <div
+              className="col-span-2 h-56 rounded-2xl"
+              style={{ background: event.imageBg }}
+            />
+            <div className="flex flex-col gap-2">
+              <div
+                className="flex-1 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }}
+              />
+              <div
+                className="flex-1 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}
+              />
+            </div>
+          </div>
 
           {/* About */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -82,14 +92,31 @@ export default function EventDetails() {
               <InfoItem icon={<Users size={16} />} label="Available Spots" value={`${event.spotsLeft} / ${event.totalSpots}`} />
               <InfoItem icon={<Tag size={16} />} label="Category" value={event.category} />
               <InfoItem icon={<Wallet size={16} />} label="Entry Fee" value={event.price} />
+              {event.directions && (
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Directions</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{event.directions}</p>
+                </div>
+              )}
             </div>
+
+            {/* View on Maps link */}
+            <a
+              href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+            >
+              <MapPin size={14} />
+              View on Google Maps
+            </a>
           </div>
 
           {/* Organiser */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-base font-bold text-gray-900 mb-4">Organiser Details</h3>
             <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                 O
               </div>
               <div>

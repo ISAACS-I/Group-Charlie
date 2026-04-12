@@ -14,4 +14,4 @@ const eventSchema = new mongoose.Schema({
   capacity:    { type: Number },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Event', eventSchema);
+module.exports = mongoose.models.Event || mongoose.model('Event', eventSchema);

@@ -1,5 +1,6 @@
-import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useState } from "react";
+import { Upload, ImagePlus, MapPin } from "lucide-react";
+import DashboardLayout from "../../components/layout/DashboardLayout";
 
 export default function CreateEvent() {
   const [form, setForm] = useState({
@@ -10,15 +11,21 @@ export default function CreateEvent() {
     time: "",
     duration: "2",
     location: "",
+    directions: "",
     attendees: "100",
     price: "0.00",
     category: "Technology",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+
+  const inputClass =
+    "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 placeholder:text-gray-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all";
 
   return (
     <DashboardLayout
@@ -28,59 +35,162 @@ export default function CreateEvent() {
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Event Details</h2>
-          <p className="text-sm text-gray-400 mb-4">Fill in the basic information about your event.</p>
+        <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-base font-bold text-gray-900 mb-1">Event Details</h2>
+          <p className="text-sm text-gray-400 mb-5">Fill in the basic information about your event.</p>
 
-          {/* Upload */}
-          <div className="border-2 border-dashed border-gray-200 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 mb-6">
-            <div className="text-sm font-medium">Upload Cover Image</div>
-            <p className="text-xs">Choose a clear event image or banner.</p>
+          {/* Cover Image */}
+          <div className="mb-4 space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Cover Image
+            </label>
+            <div className="flex h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-400 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors gap-2">
+              <Upload size={24} className="text-gray-300" />
+              <p className="text-sm font-medium">Upload Cover Image</p>
+              <p className="text-xs">Used as the hero banner at the top of your event page.</p>
+            </div>
           </div>
 
-          {/* Inputs */}
+          {/* Event Photos */}
+          <div className="mb-6 space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Event Photos
+            </label>
+            <p className="text-xs text-gray-400 mb-1">Add multiple photos to showcase your event. These will appear in a gallery on your event page.</p>
+            <div className="flex h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-400 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors gap-2">
+              <ImagePlus size={24} className="text-gray-300" />
+              <p className="text-sm font-medium">Upload Event Photos</p>
+              <p className="text-xs">You can upload multiple photos.</p>
+            </div>
+          </div>
+
+          {/* Form Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              name="name"
-              placeholder="Event Name"
-              value={form.name}
-              onChange={handleChange}
-              className="input"
-            />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Event Name</label>
+              <input
+                name="name"
+                placeholder="e.g. Developer Meetup 2026"
+                value={form.name}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
 
-            <input
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              className="input"
-            />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Event Type</label>
+              <select name="type" value={form.type} onChange={handleChange} className={inputClass}>
+                <option>Conference</option>
+                <option>Workshop</option>
+                <option>Meetup</option>
+                <option>Webinar</option>
+                <option>Festival</option>
+                <option>Other</option>
+              </select>
+            </div>
 
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={handleChange}
-              className="input col-span-1 sm:col-span-2 h-24"
-            />
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</label>
+              <textarea
+                name="description"
+                placeholder="Describe your event..."
+                value={form.description}
+                onChange={handleChange}
+                rows={4}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
 
-            <input name="date" type="date" value={form.date} onChange={handleChange} className="input" />
-            <input name="time" type="time" value={form.time} onChange={handleChange} className="input" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</label>
+              <input name="date" type="date" value={form.date} onChange={handleChange} className={inputClass} />
+            </div>
 
-            <input name="duration" value={form.duration} onChange={handleChange} className="input" placeholder="Duration (hrs)" />
-            <input name="attendees" value={form.attendees} onChange={handleChange} className="input" placeholder="Max Attendees" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Time</label>
+              <input name="time" type="time" value={form.time} onChange={handleChange} className={inputClass} />
+            </div>
 
-            <input name="location" value={form.location} onChange={handleChange} className="input col-span-1 sm:col-span-2" placeholder="Location" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration (hrs)</label>
+              <input name="duration" value={form.duration} onChange={handleChange} placeholder="e.g. 2" className={inputClass} />
+            </div>
 
-            <input name="price" value={form.price} onChange={handleChange} className="input" placeholder="Ticket Price" />
-            <input name="category" value={form.category} onChange={handleChange} className="input" placeholder="Category" />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Max Attendees</label>
+              <input name="attendees" value={form.attendees} onChange={handleChange} placeholder="e.g. 100" className={inputClass} />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</label>
+              <div className="flex gap-2">
+                <input
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Innovation Hub, Gaborone"
+                  className={`${inputClass} flex-1`}
+                />
+                {form.location.trim() !== "" && (
+                  <a
+                    href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(form.location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-indigo-600 whitespace-nowrap"
+                  >
+                    <MapPin size={14} />
+                    View on Maps
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Directions
+              </label>
+              <textarea
+                name="directions"
+                placeholder="e.g. From the main road, turn left at the BP garage. We are the second building on the right."
+                value={form.directions}
+                onChange={handleChange}
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ticket Price (P)</label>
+              <input name="price" value={form.price} onChange={handleChange} placeholder="0.00" className={inputClass} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</label>
+              <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
+                <option>Technology</option>
+                <option>Business</option>
+                <option>Music</option>
+                <option>Sports</option>
+                <option>Arts & Culture</option>
+                <option>Food & Drink</option>
+                <option>Community</option>
+                <option>Other</option>
+              </select>
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-6">
-            <button className="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-xl">
+          <div className="mt-6 flex gap-3">
+            <button
+              type="button"
+              className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-200"
+            >
               Save as Draft
             </button>
-            <button className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700">
+            <button
+              type="button"
+              className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
               Create Event
             </button>
           </div>
@@ -88,45 +198,40 @@ export default function CreateEvent() {
 
         {/* Sidebar */}
         <div className="space-y-5">
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900 mb-3">Quick Actions</h3>
             <div className="space-y-2">
-              <button className="w-full text-left px-3 py-2 rounded-lg border text-sm text-gray-600 hover:bg-gray-50">
-                Duplicate Last Event
-              </button>
-              <button className="w-full text-left px-3 py-2 rounded-lg border text-sm text-gray-600 hover:bg-gray-50">
-                Import Event Template
-              </button>
-              <button className="w-full text-left px-3 py-2 rounded-lg border text-sm text-gray-600 hover:bg-gray-50">
-                Invite Team Members
-              </button>
+              {["Duplicate Last Event", "Import Event Template", "Invite Team Members"].map(label => (
+                <button
+                  key={label}
+                  type="button"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Recent Events */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Events</h3>
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="font-medium">Tech Conference 2024</p>
-                <p className="text-gray-400 text-xs">March 15, 2024</p>
-              </div>
-              <div>
-                <p className="font-medium">Design Workshop</p>
-                <p className="text-gray-400 text-xs">March 10, 2024</p>
-              </div>
-              <div>
-                <p className="font-medium">Marketing Webinar</p>
-                <p className="text-gray-400 text-xs">March 5, 2024</p>
-              </div>
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900 mb-3">Recent Events</h3>
+            <div className="space-y-3">
+              {[
+                { title: "Tech Conference 2024", date: "March 15, 2024" },
+                { title: "Design Workshop", date: "March 10, 2024" },
+                { title: "Marketing Webinar", date: "March 5, 2024" },
+              ].map(event => (
+                <div key={event.title}>
+                  <p className="text-sm font-medium text-gray-900">{event.title}</p>
+                  <p className="text-xs text-gray-400">{event.date}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Tips */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Event Tips</h3>
-            <ul className="text-xs text-gray-400 space-y-1 list-disc pl-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900 mb-3">Event Tips</h3>
+            <ul className="space-y-2 text-xs text-gray-400 list-disc pl-4">
               <li>Use a clear and specific title.</li>
               <li>Add the correct venue or online link.</li>
               <li>Keep the description short and useful.</li>
@@ -137,9 +242,3 @@ export default function CreateEvent() {
     </DashboardLayout>
   );
 }
-
-// Tailwind helper (optional)
-// Add this in your global CSS if you want cleaner inputs
-// .input {
-//   @apply w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500;
-// }

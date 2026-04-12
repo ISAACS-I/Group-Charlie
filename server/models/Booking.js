@@ -7,4 +7,4 @@ const bookingSchema = new mongoose.Schema({
   scannedAt: { type: Date },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);

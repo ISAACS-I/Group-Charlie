@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 // ===================== TYPES =====================
@@ -116,11 +117,10 @@ function StatusTab({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-        active
+      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${active
           ? "bg-indigo-600 text-white"
           : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-      }`}
+        }`}
     >
       {label} ({count})
     </button>
@@ -131,9 +131,7 @@ function StatusTab({
 // It matches the card layout shown in the screenshot.
 function MyEventCard({
   event,
-  onManage,
-  onEdit,
-  onDelete,
+  onManage
 }: {
   event: MyEventItem;
   onManage?: (event: MyEventItem) => void;
@@ -141,7 +139,7 @@ function MyEventCard({
   onDelete?: (event: MyEventItem) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
       {/* Top decorative image/banner area */}
       <div
         className="h-36 w-full"
@@ -153,37 +151,13 @@ function MyEventCard({
 
       {/* Content section */}
       <div className="p-4">
-        {/* Top row with category and action icons */}
+        {/* Top row with category*/}
         <div className="mb-3 flex items-start justify-between gap-3">
           <p className="text-sm text-gray-500">{event.category}</p>
-
-          <div className="flex items-center gap-2">
-            {/* Edit button */}
-            <button
-              type="button"
-              onClick={() => onEdit?.(event)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm transition hover:bg-gray-200"
-              aria-label={`Edit ${event.title}`}
-              title="Edit event"
-            >
-              ✏️
-            </button>
-
-            {/* Delete button */}
-            <button
-              type="button"
-              onClick={() => onDelete?.(event)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm transition hover:bg-gray-200"
-              aria-label={`Delete ${event.title}`}
-              title="Delete event"
-            >
-              🗑️
-            </button>
           </div>
-        </div>
 
         {/* Main event details */}
-        <h3 className="text-2xl font-bold leading-tight text-gray-900">
+        <h3 className="text-base font-semibold leading-tight text-gray-900">
           {event.title}
         </h3>
 
@@ -215,6 +189,8 @@ export default function MyEventsPage() {
   // This stores the currently selected status tab.
   // The page starts by showing "Upcoming" events.
   const [activeTab, setActiveTab] = useState<EventStatus>("Upcoming");
+
+  const navigate = useNavigate();
 
   // This stores the text the user types into the search field.
   const [searchTerm, setSearchTerm] = useState("");
@@ -281,7 +257,7 @@ export default function MyEventsPage() {
   // These handler functions are placeholders for future logic.
   // Right now they just show where actions would be added later.
   const handleManageEvent = (event: MyEventItem) => {
-    console.log("Manage event:", event.title);
+    navigate(`/my-events/${event.id}`);
   };
 
   const handleEditEvent = (event: MyEventItem) => {
