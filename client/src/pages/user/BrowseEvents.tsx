@@ -21,36 +21,6 @@ const LOCATIONS = ["All Locations", "Gaborone", "Francistown", "Maun", "Serowe"]
 
 type ViewMode = "grid" | "list";
 
-function matchesDateFilter(eventDate: string | undefined, filter: string) {
-  if (!eventDate || filter === "All Dates") return true;
-
-  const lower = eventDate.toLowerCase();
-
-  if (filter === "This Week") {
-    return lower.includes("march 25, 2026") || lower.includes("march 28, 2026");
-  }
-
-  if (filter === "This Month") {
-    return lower.includes("march");
-  }
-
-  if (filter === "Next Month") {
-    return lower.includes("april");
-  }
-
-  return true;
-}
-
-export default function BrowseEvents() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "All Categories");
-  const [date, setDate] = useState(searchParams.get("date") ?? "All Dates");
-  const [location, setLocation] = useState(searchParams.get("location") ?? "All Locations");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-
   const allEvents: EventItem[] = [
     ...featuredEvents,
     {
@@ -108,6 +78,38 @@ export default function BrowseEvents() {
     },
   ];
 
+function matchesDateFilter(eventDate: string | undefined, filter: string) {
+  if (!eventDate || filter === "All Dates") return true;
+
+  const lower = eventDate.toLowerCase();
+
+  if (filter === "This Week") {
+    return lower.includes("march 25, 2026") || lower.includes("march 28, 2026");
+  }
+
+  if (filter === "This Month") {
+    return lower.includes("march");
+  }
+
+  if (filter === "Next Month") {
+    return lower.includes("april");
+  }
+
+  return true;
+}
+
+export default function BrowseEvents() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "All Categories");
+  const [date, setDate] = useState(searchParams.get("date") ?? "All Dates");
+  const [location, setLocation] = useState(searchParams.get("location") ?? "All Locations");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
+
+
   useEffect(() => {
     const params = new URLSearchParams();
 
@@ -141,9 +143,9 @@ export default function BrowseEvents() {
 
       return matchesSearch && matchesCategory && matchesLocation && matchesDate;
     });
-  }, [allEvents, search, category, date, location]);
+  }, [search, category, date, location]);
 
-  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
+  const handleEventAction = (event: EventItem) => navigate(`/browse-events/${event.id}`);
 
   return (
     <DashboardLayout

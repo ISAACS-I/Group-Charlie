@@ -33,8 +33,7 @@ const QUICK_ACTIONS = [
 
 export default function OrganiserHome() {
   const navigate = useNavigate();
-
-  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
+  const handleEventAction = (event: EventItem) => navigate(`/manage-event/${event.id}`);
 
   return (
     <DashboardLayout
@@ -42,12 +41,13 @@ export default function OrganiserHome() {
       subtitle="Manage your events, track engagement, and create new experiences from one place."
       showSponsor
     >
-      <section className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-2xl bg-indigo-600 p-7 md:col-span-2">
+      {/* Full width banner */}
+      <section className="mb-6">
+        <div className="rounded-2xl bg-indigo-600 p-8">
           <span className="text-xs font-semibold uppercase tracking-widest text-indigo-200">
             Quick Action
           </span>
-          <h2 className="mt-2 text-xl font-bold leading-snug text-white">
+          <h2 className="mt-2 text-2xl font-bold leading-snug text-white">
             Create and Manage Events Easily
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-indigo-200">
@@ -62,12 +62,16 @@ export default function OrganiserHome() {
             Create Event
           </button>
         </div>
+      </section>
 
+      {/* Stat cards row */}
+      <section className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard value="08" label="Active Events" note="2 more than last month" />
         <StatCard value="1,248" label="Total Attendees" note="Across all current events" />
         <StatCard value="87%" label="Engagement Rate" note="Strong attendee interaction" />
       </section>
 
+      {/* Quick Actions */}
       <section className="mb-10">
         <h2 className="mb-4 text-lg font-bold text-gray-900">Quick Actions</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -85,6 +89,7 @@ export default function OrganiserHome() {
         </div>
       </section>
 
+      {/* My Events */}
       <section className="mb-10">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">My Events</h2>
@@ -114,6 +119,7 @@ export default function OrganiserHome() {
         )}
       </section>
 
+      {/* Organiser Insights */}
       <section>
         <h2 className="mb-4 text-lg font-bold text-gray-900">Organiser Insights</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

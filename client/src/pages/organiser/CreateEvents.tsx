@@ -1,7 +1,7 @@
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useState } from "react";
 
-export default function CreateEventPage() {
+export default function CreateEvent() {
   const [form, setForm] = useState({
     name: "",
     type: "Conference",

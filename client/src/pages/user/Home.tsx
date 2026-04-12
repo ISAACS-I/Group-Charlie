@@ -37,7 +37,7 @@ export default function Home() {
     });
   }, [searchTerm, selectedCategory]);
 
-  const handleEventAction = (event: EventItem) => navigate(`/events/${event.id}`);
+  const handleEventAction = (event: EventItem) => navigate(`/browse-events/${event.id}`);
 
   const handleSearch = () => {
     const params = new URLSearchParams();

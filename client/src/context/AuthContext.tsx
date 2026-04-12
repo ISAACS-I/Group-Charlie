@@ -14,6 +14,8 @@ interface AuthContextValue {
   isLoading: boolean;
   setRole: (role: UserRole) => void;
   clearRole: () => void;
+  signIn: (username: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>; // Add this line
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -40,8 +42,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoleState(null);
   }, []);
 
+  const signIn = useCallback(async (username: string, password: string) => {
+    if (!username || !password) {
+      throw new Error("Invalid credentials");
+    }
+
+    // simulate authentication
+    if (username.toLowerCase().includes("admin")) {
+      setRole("admin");
+    } else {
+      setRole("user");
+    }
+  }, [setRole]);
+
+  // Add signOut function
+  const signOut = useCallback(async () => {
+    localStorage.removeItem("role");
+    localStorage.removeItem("userInfo"); // Clear any stored user data
+    setRoleState(null);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ role, isAdmin: role === "admin", isLoading, setRole, clearRole }}>
+    <AuthContext.Provider 
+      value={{ 
+        role, 
+        isAdmin: role === "admin", 
+        isLoading, 
+        setRole, 
+        clearRole,
+        signIn,
+        signOut, // Add this
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

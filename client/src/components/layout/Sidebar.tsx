@@ -6,9 +6,10 @@ interface SidebarProps {
   onClose: () => void;
   sections: SidebarSection[];
   bottomLinks: SidebarLink[];
+  onLogout?: () => void; // Add this for logout handling
 }
 
-export default function Sidebar({ isOpen, onClose, sections, bottomLinks }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, sections, bottomLinks, onLogout }: SidebarProps) {
   return (
     <>
       <div
@@ -66,16 +67,41 @@ export default function Sidebar({ isOpen, onClose, sections, bottomLinks }: Side
         </nav>
 
         <div className="space-y-1 border-t border-white/10 px-3 py-4">
-          {bottomLinks.map((link) => (
-            <NavLink
-              key={link.href}
-              to={link.href}
-              onClick={onClose}
-              className="block rounded-xl px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {link.label}
-            </NavLink>
-          ))}
+          {bottomLinks.map((link) => {
+            // Handle logout differently
+            if (link.href === "/logout" || link.label.toLowerCase().includes("sign out")) {
+              return (
+                <button
+                  key={link.href}
+                  onClick={() => {
+                    onLogout?.();
+                    onClose();
+                  }}
+                  className="block w-full text-left rounded-xl px-3 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                >
+                  {link.label}
+                </button>
+              );
+            }
+
+            // Regular NavLink for other bottom links (Settings, Login, Signup)
+            return (
+              <NavLink
+                key={link.href}
+                to={link.href}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `block rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    isActive
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 font-medium text-white"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            );
+          })}
         </div>
       </aside>
     </>

@@ -1,3 +1,5 @@
+import logoImage from '../../assets/logo.png'; 
+
 interface TopbarProps {
   title: string;
   subtitle?: string;
@@ -7,7 +9,7 @@ interface TopbarProps {
 
 export default function Topbar({ title, subtitle, onMenuClick, showSponsor }: TopbarProps) {
   return (
-    <header className="flex items-start justify-between border-b border-gray-100 bg-white px-6 py-5">
+    <header className="flex items-center justify-between border-b border-gray-100 bg-white px-6 h-16">
       <div className="flex items-start gap-4">
         <button
           onClick={onMenuClick}
@@ -36,14 +38,13 @@ export default function Topbar({ title, subtitle, onMenuClick, showSponsor }: To
       </div>
 
       {showSponsor && (
-        <div className="hidden items-center gap-3 sm:flex">
-          <div className="flex h-9 w-20 items-center justify-center rounded-lg border border-gray-200 text-xs text-gray-400">
-            Logo
+        <div className="hidden sm:flex">
+            <img 
+              src={logoImage} 
+              alt="Logo"
+              className="h-60 w-auto object-contain"
+            />
           </div>
-          <div className="flex h-9 w-32 items-center justify-center rounded-lg border border-gray-200 text-xs text-gray-400">
-            Sponsors / Partners
-          </div>
-        </div>
       )}
     </header>
   );
