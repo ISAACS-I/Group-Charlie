@@ -15,7 +15,6 @@ export function getSidebarSections(isAdmin: boolean): SidebarSection[] {
       links: [
         { label: "My Bookings", href: "/my-bookings" },
         { label: "Saved Events", href: "/saved-events" },
-        { label: "QR Codes", href: "/qr-codes" },
       ],
     },
   ];

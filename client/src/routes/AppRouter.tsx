@@ -13,12 +13,9 @@ import Analytics from "../pages/organiser/Analytics";
 import CreateEventPage from "../pages/organiser/CreateEvents";
 import AttendeesPage from "../pages/organiser/Attendees";
 import Settings from "../pages/settings/Settings";
-
-const Placeholder = ({ name }: { name: string }) => (
-  <div className="flex h-screen items-center justify-center text-sm text-gray-400">
-    {name} — coming soon
-  </div>
-);
+import Categories from "../pages/user/Categories";
+import MyBookings from "../pages/user/MyBookings";
+import SavedEvents from "../pages/user/SavedEvents";
 
 export default function AppRouter() {
   return (
@@ -28,14 +25,14 @@ export default function AppRouter() {
       <Route path="/home" element={<Home />} />
       <Route path="/browse-events" element={<BrowseEvents />} />
       <Route path="/browse-events/:id" element={<EventDetails />} />
+      <Route path="/categories" element={<Categories />} />
       <Route path="/login" element={<UserLogin />} />
       <Route path="/signup" element={<UserSignup />} />
       <Route path="/payment" element={<PaymentPage />} />
 
       {/* Protected User Routes */}
-      <Route path="/my-bookings" element={<ProtectedRoute><Placeholder name="My Bookings" /></ProtectedRoute>} />
-      <Route path="/saved-events" element={<ProtectedRoute><Placeholder name="Saved Events" /></ProtectedRoute>} />
-      <Route path="/qr-codes" element={<ProtectedRoute><Placeholder name="QR Codes" /></ProtectedRoute>} />
+      <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+      <Route path="/saved-events" element={<ProtectedRoute><SavedEvents /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
       {/* Protected Organiser Routes */}

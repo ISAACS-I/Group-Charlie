@@ -33,7 +33,7 @@ const QUICK_ACTIONS = [
 
 export default function OrganiserHome() {
   const navigate = useNavigate();
-  const handleEventAction = (event: EventItem) => navigate(`/manage-event/${event.id}`);
+  const handleEventAction = (event: EventItem) => navigate(`/my-events/${event.id}`);
 
   return (
     <DashboardLayout

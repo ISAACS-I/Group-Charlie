@@ -3,19 +3,18 @@ const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth');
 const Booking = require('../models/Booking');
 const Event = require('../models/Event');
-const User = require('../models/User'); 
+const User = require('../models/User');
 
 // GET /api/analytics - Auth bypassed for development
 router.get('/', async (req, res) => {
   try {
-    // Mock user for development - use the seeded admin user
     const adminUser = await User.findOne({ email: 'demo@eventhub.com' });
-    
+
     if (!adminUser) {
       return res.status(500).json({ message: 'Admin user not found. Run seed script first.' });
     }
-    
-    req.user = adminUser; // Mock the authenticated user
+
+    req.user = adminUser;
     const organiserId = req.user._id;
 
     // Get all events by this organiser
@@ -82,12 +81,35 @@ router.get('/', async (req, res) => {
     // Top performing event
     const top = performance.sort((a, b) => b.total - a.total)[0] ?? null;
 
+    // Age group breakdown from attendee DOBs
+    const now = new Date();
+    const bookedUserIds = await Booking.distinct('user', {
+      event: { $in: eventIds },
+      status: 'confirmed',
+    });
+    const attendees = await User.find({ _id: { $in: bookedUserIds } }).select('dob');
+
+    const ageGroups = { 'Under 18': 0, '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
+
+    attendees.forEach(user => {
+      if (!user.dob) return;
+      const age = Math.floor((now - new Date(user.dob)) / (365.25 * 24 * 60 * 60 * 1000));
+      if (age < 18) ageGroups['Under 18']++;
+      else if (age <= 24) ageGroups['18-24']++;
+      else if (age <= 34) ageGroups['25-34']++;
+      else if (age <= 44) ageGroups['35-44']++;
+      else ageGroups['45+']++;
+    });
+
+    const ageData = Object.entries(ageGroups).map(([group, count]) => ({ group, count }));
+
     res.json({
       totalAttendees,
       attendanceRate,
       attendanceData,
       performance,
       top,
+      ageData,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
