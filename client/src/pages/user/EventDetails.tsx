@@ -1,11 +1,11 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Calendar, Clock, MapPin, Users, Tag, Wallet, Mail, Phone } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Tag, Wallet, Mail, Phone, Plus, X } from "lucide-react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 export default function EventDetails() {
   const { id } = useParams();
 
-  // Hardcoded for now — will be replaced with API call using `id`
   const event = {
     id,
     category: "Culture • Food • Music",
@@ -22,6 +22,55 @@ export default function EventDetails() {
     organiserName: "EventHub Cultural Team",
     organiserEmail: "culture@eventhub.com",
     organiserPhone: "+267 70000000",
+  };
+
+  const [members, setMembers] = useState<{ name: string; email: string }[]>([]);
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupSent, setGroupSent] = useState(false);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+
+  const addMember = () => setMembers([...members, { name: "", email: "" }]);
+
+  const removeMember = (index: number) =>
+    setMembers(members.filter((_, i) => i !== index));
+
+  const updateMember = (index: number, field: string, value: string) => {
+    const updated = [...members];
+    updated[index] = { ...updated[index], [field]: value };
+    setMembers(updated);
+  };
+
+  const handleGroupBooking = async () => {
+    const valid = members.every(m => m.name.trim() && m.email.trim());
+    if (!valid) {
+      setGroupError("Please fill in all name and email fields.");
+      return;
+    }
+
+    setGroupError(null);
+    setIsSending(true);
+
+    try {
+      const res = await fetch("http://localhost:5001/api/bookings/group", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ eventId: event.id, members }),
+      });
+
+      if (!res.ok) throw new Error("Failed to send group booking");
+
+      setGroupSent(true);
+      setMembers([]);
+      setShowGroupForm(false);
+    } catch (err: any) {
+      setGroupError(err.message);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -60,19 +109,10 @@ export default function EventDetails() {
         <div className="lg:col-span-2 space-y-6">
           {/* Photo Gallery */}
           <div className="grid grid-cols-3 gap-2">
-            <div
-              className="col-span-2 h-56 rounded-2xl"
-              style={{ background: event.imageBg }}
-            />
+            <div className="col-span-2 h-56 rounded-2xl" style={{ background: event.imageBg }} />
             <div className="flex flex-col gap-2">
-              <div
-                className="flex-1 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }}
-              />
-              <div
-                className="flex-1 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}
-              />
+              <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }} />
+              <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }} />
             </div>
           </div>
 
@@ -99,8 +139,7 @@ export default function EventDetails() {
                 </div>
               )}
             </div>
-
-            {/* View on Maps link */}
+            
             <a
               href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
               target="_blank"
@@ -154,6 +193,12 @@ export default function EventDetails() {
               </div>
             </div>
 
+            {groupSent && (
+              <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-xs font-medium text-emerald-700">
+                ✓ QR passes sent to all group members!
+              </div>
+            )}
+
             <div className="mt-5 space-y-3">
               <button
                 type="button"
@@ -167,6 +212,80 @@ export default function EventDetails() {
               >
                 Save Event
               </button>
+            </div>
+
+            {/* Group Booking */}
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowGroupForm(!showGroupForm)}
+                className="w-full rounded-xl border border-indigo-200 py-2.5 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50"
+              >
+                {showGroupForm ? "Hide Group Booking" : "Registering as a group?"}
+              </button>
+
+              {showGroupForm && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs text-gray-400">
+                    Add each person's details. They will each receive their own QR pass via email.
+                  </p>
+
+                  {members.map((member, index) => (
+                    <div key={index} className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-gray-600">Person {index + 1}</p>
+                        <button
+                          type="button"
+                          onClick={() => removeMember(index)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Full Name"
+                        value={member.name}
+                        onChange={(e) => updateMember(index, "name", e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email Address"
+                        value={member.email}
+                        onChange={(e) => updateMember(index, "email", e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      />
+                    </div>
+                  ))}
+
+                  {groupError && (
+                    <p className="text-xs text-red-500">{groupError}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={addMember}
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-indigo-300 hover:text-indigo-600"
+                  >
+                    <Plus size={14} />
+                    Add Person
+                  </button>
+
+                  {members.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleGroupBooking}
+                      disabled={isSending}
+                      className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {isSending
+                        ? "Sending..."
+                        : `Send QR Passes (${members.length} ${members.length === 1 ? "person" : "people"})`}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="mt-6">

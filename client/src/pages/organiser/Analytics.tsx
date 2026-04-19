@@ -54,10 +54,24 @@ export default function Analytics() {
         });
         if (!res.ok) throw new Error("Failed to fetch analytics");
         const json = await res.json();
+<<<<<<< Updated upstream
         setData(json);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         setError(message);
+=======
+        // If all zeros and no events, still set data so we show zeros not error
+        setData({
+          totalAttendees: json.totalAttendees ?? 0,
+          attendanceRate: json.attendanceRate ?? 0,
+          attendanceData: json.attendanceData ?? [],
+          performance: json.performance ?? [],
+          top: json.top ?? null,
+          ageData: json.ageData ?? [],
+        });
+      } catch (err: any) {
+        setError(err.message);
+>>>>>>> Stashed changes
       } finally {
         setIsLoading(false);
       }
@@ -75,12 +89,28 @@ export default function Analytics() {
     );
   }
 
+  // TO THIS:
   if (error || !data) {
     return (
-      <DashboardLayout title="Analytics" subtitle="Track event performance, attendee growth, and engagement across your events." showSponsor>
-        <div className="flex h-96 flex-col items-center justify-center gap-2">
-          <p className="text-base font-medium text-gray-600">Failed to load analytics</p>
-          <p className="text-sm text-gray-400">{error}</p>
+      <DashboardLayout
+        title="Analytics"
+        subtitle="Track event performance, attendee growth, and engagement across your events."
+        showSponsor
+      >
+        <div className="flex h-96 flex-col items-center justify-center gap-3">
+          <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-sm">
+            <p className="text-base font-bold text-gray-900">No analytics yet</p>
+            <p className="mt-1 text-sm text-gray-400">
+              Create and publish events to start seeing attendance data, performance breakdowns, and audience insights here.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.href = "/create-event"}
+              className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
+              Create Your First Event
+            </button>
+          </div>
         </div>
       </DashboardLayout>
     );
