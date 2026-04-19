@@ -30,12 +30,12 @@ export default function AppRouter() {
       <Route path="/signup" element={<UserSignup />} />
       <Route path="/payment" element={<PaymentPage />} />
 
-      {/* Protected User Routes */}
+      {/* Protected User Routes (any logged-in user) */}
       <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
       <Route path="/saved-events" element={<ProtectedRoute><SavedEvents /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-      {/* Protected Organiser Routes */}
+      {/* Protected Organiser / Admin Routes */}
       <Route path="/organiser-home" element={<ProtectedRoute requireAdmin><OrganiserHome /></ProtectedRoute>} />
       <Route path="/create-event" element={<ProtectedRoute requireAdmin><CreateEventPage /></ProtectedRoute>} />
       <Route path="/my-events" element={<ProtectedRoute requireAdmin><MyEventsPage /></ProtectedRoute>} />

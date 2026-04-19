@@ -8,70 +8,117 @@ import {
 } from "react";
 import type { UserRole } from "../types";
 
+interface AuthUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  qrCode?: string;
+  token: string;
+}
+
 interface AuthContextValue {
+  user: AuthUser | null;
   role: UserRole | null;
   isAdmin: boolean;
   isLoading: boolean;
-  setRole: (role: UserRole) => void;
-  clearRole: () => void;
-  signIn: (username: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>; // Add this line
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (data: SignUpData) => Promise<void>;
+  signOut: () => void;
 }
+
+export interface SignUpData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  password: string;
+}
+
+const API_BASE = "http://localhost:5001/api";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<UserRole | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // On mount, restore session from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("role") as UserRole | null;
-    if (stored === "admin" || stored === "user") {
-      setRoleState(stored);
+    const stored = localStorage.getItem("authUser");
+    if (stored) {
+      try {
+        const parsed: AuthUser = JSON.parse(stored);
+        setUser(parsed);
+      } catch {
+        localStorage.removeItem("authUser");
+      }
     }
     setIsLoading(false);
   }, []);
 
-  const setRole = useCallback((newRole: UserRole) => {
-    localStorage.setItem("role", newRole);
-    setRoleState(newRole);
-  }, []);
+  const signIn = useCallback(async (email: string, password: string) => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  const clearRole = useCallback(() => {
-    localStorage.removeItem("role");
-    setRoleState(null);
-  }, []);
+    const data = await res.json();
 
-  const signIn = useCallback(async (username: string, password: string) => {
-    if (!username || !password) {
-      throw new Error("Invalid credentials");
+    if (!res.ok) {
+      throw new Error(data.message || "Invalid credentials");
     }
 
-    // simulate authentication
-    if (username.toLowerCase().includes("admin")) {
-      setRole("admin");
-    } else {
-      setRole("user");
-    }
-  }, [setRole]);
+    const authUser: AuthUser = data;
+    localStorage.setItem("authUser", JSON.stringify(authUser));
+    setUser(authUser);
+  }, []);
 
-  // Add signOut function
-  const signOut = useCallback(async () => {
-    localStorage.removeItem("role");
-    localStorage.removeItem("userInfo"); // Clear any stored user data
-    setRoleState(null);
+  const signUp = useCallback(async (formData: SignUpData) => {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        gender: formData.gender,
+        dob: formData.dateOfBirth,
+        password: formData.password,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to create account");
+    }
+
+    const authUser: AuthUser = data;
+    localStorage.setItem("authUser", JSON.stringify(authUser));
+    setUser(authUser);
+  }, []);
+
+  const signOut = useCallback(() => {
+    localStorage.removeItem("authUser");
+    setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        role, 
-        isAdmin: role === "admin", 
-        isLoading, 
-        setRole, 
-        clearRole,
+    <AuthContext.Provider
+      value={{
+        user,
+        role: user?.role ?? null,
+        isAdmin: user?.role === "admin",
+        isLoading,
         signIn,
-        signOut, // Add this
+        signUp,
+        signOut,
       }}
     >
       {children}

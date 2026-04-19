@@ -21,18 +21,20 @@ export default function DashboardLayout({
   showSponsor = false,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { role, isAdmin, isLoading, setRole, clearRole, signOut } = useAuth();
+  const { role, isAdmin, isLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const sections = getSidebarSections(isAdmin);
 
   const bottomLinks: SidebarLink[] = [
     { label: "Settings", href: "/settings" },
-    { label: role ? "Logout" : "Sign in", href: role ? "/logout" : "/login" },
+    ...(role
+      ? [{ label: "Logout", href: "/logout" }]
+      : [{ label: "Sign In", href: "/login" }]),
   ];
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    signOut();
     navigate("/login");
   };
 
@@ -54,42 +56,15 @@ export default function DashboardLayout({
           subtitle={subtitle}
           onMenuClick={() => setSidebarOpen(true)}
           showSponsor={showSponsor}
+          userName={user ? `${user.firstName} ${user.lastName}` : undefined}
+          isLoggedIn={!!role}
+          onLogin={() => navigate("/login")}
         />
 
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
 
         <Footer />
       </div>
-
-      {import.meta.env.DEV && (
-        <div className="fixed bottom-4 right-4 z-50 flex gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg text-xs">
-          <button
-            type="button"
-            onClick={() => setRole("user")}
-            className={`rounded-xl px-3 py-1.5 font-medium transition-colors ${
-              role === "user" ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            User
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole("admin")}
-            className={`rounded-xl px-3 py-1.5 font-medium transition-colors ${
-              role === "admin" ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => clearRole()}
-            className="rounded-xl px-3 py-1.5 font-medium text-gray-500 hover:bg-gray-100"
-          >
-            Guest
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,13 +1,24 @@
-import logoImage from '../../assets/logo.png'; 
+import logoImage from '../../assets/logo.png';
 
 interface TopbarProps {
   title: string;
   subtitle?: string;
   onMenuClick: () => void;
   showSponsor?: boolean;
+  userName?: string;
+  isLoggedIn?: boolean;
+  onLogin?: () => void;
 }
 
-export default function Topbar({ title, subtitle, onMenuClick, showSponsor }: TopbarProps) {
+export default function Topbar({
+  title,
+  subtitle,
+  onMenuClick,
+  showSponsor,
+  userName,
+  isLoggedIn,
+  onLogin,
+}: TopbarProps) {
   return (
     <header className="flex items-center justify-between border-b border-gray-100 bg-white px-6 h-16">
       <div className="flex items-start gap-4">
@@ -37,15 +48,34 @@ export default function Topbar({ title, subtitle, onMenuClick, showSponsor }: To
         </div>
       </div>
 
-      {showSponsor && (
-        <div className="hidden sm:flex">
-            <img 
-              src={logoImage} 
+      <div className="flex items-center gap-3">
+        {isLoggedIn && userName ? (
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium text-gray-700">{userName}</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onLogin}
+            className="hidden sm:block rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+          >
+            Sign In
+          </button>
+        )}
+
+        {showSponsor && (
+          <div className="hidden sm:flex">
+            <img
+              src={logoImage}
               alt="Logo"
               className="h-60 w-auto object-contain"
             />
           </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }
