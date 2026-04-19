@@ -123,15 +123,18 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Column */}
       <div className="relative hidden flex-1 flex-col justify-center bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-700 text-white lg:flex overflow-hidden px-12 py-12">
-        <div className="z-10 max-w-md space-y-8">
-          <img src={logoImage} alt="EventHub Logo" className="h-16 w-auto object-contain brightness-0 invert" />
-          <div className="space-y-3">
+        <div className="z-10 max-w-md w-full">
+          {/* Logo - 1.5x bigger again (from w-96 to w-144) and positioned higher */}
+          <div className="flex justify-start -mt-20">
+            <img src={logoImage} alt="EventHub Logo" className="w-144 h-auto object-contain brightness-0 invert" />
+          </div>
+          <div className="space-y-1 -mt-16">
             <h1 className="text-4xl font-extrabold tracking-tight leading-tight">Welcome Back</h1>
             <p className="text-sm text-indigo-100 leading-relaxed">
               Sign in to your account and pick up right where you left off.
             </p>
           </div>
-          <div className="space-y-5">
+          <div className="mt-8 space-y-5">
             {features.map((item, i) => <FeatureItem key={i} {...item} />)}
           </div>
         </div>
@@ -182,8 +185,6 @@ export default function LoginPage() {
               }
             />
 
-            
-
             <button
               type="submit"
               disabled={isSubmitting}
@@ -193,12 +194,12 @@ export default function LoginPage() {
             </button>
 
             <div className="flex items-center justify-between">
-            <p className="text-center text-sm text-gray-500">
-              Don't have an account?{" "}
-              <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
-                Sign up
-              </Link>
-            </p>
+              <p className="text-center text-sm text-gray-500">
+                Don't have an account?{" "}
+                <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
+                  Sign up
+                </Link>
+              </p>
               <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
                 Forgot password?
               </Link>
