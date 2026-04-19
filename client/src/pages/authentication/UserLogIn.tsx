@@ -27,10 +27,7 @@ function InputField({
 }: InputFieldProps) {
   return (
     <div className="w-full space-y-1.5">
-      <label
-        htmlFor={name}
-        className="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-      >
+      <label htmlFor={name} className="text-sm font-medium text-gray-600">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -43,7 +40,7 @@ function InputField({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`w-full h-11 rounded-xl border border-gray-100 bg-white text-sm text-gray-900 shadow-sm placeholder:text-gray-300 transition-colors focus:border-indigo-300 focus:ring-1 focus:ring-indigo-100 px-4 ${rightElement ? "pr-11" : ""}`}
+          className={`w-full h-11 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none px-4 ${rightElement ? "pr-11" : ""}`}
         />
         {rightElement && (
           <div className="absolute right-0 top-0 flex h-full items-center pr-3">
@@ -58,7 +55,7 @@ function InputField({
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex gap-3">
-      <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-[#6366f1] text-white">
+      <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 text-white">
         {icon}
       </div>
       <div>
@@ -79,7 +76,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // After login, go back to the page they were trying to visit (or home)
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/home";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,18 +120,18 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Column */}
-      <div className="relative hidden flex-1 flex-col bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-700 text-white lg:flex overflow-hidden">
-        <div className="pt-8 px-8">
-          <img src={logoImage} alt="EventHub Logo" className="h-96 w-auto object-contain brightness-0 invert -mb-8 -mt-8" />
-        </div>
-        <div className="px-8 max-w-md -mt-16">
+      <div className="relative hidden flex-1 flex-col justify-center bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-700 text-white lg:flex overflow-hidden px-12 py-12">
+        <div className="z-10 max-w-md space-y-8">
+          <img src={logoImage} alt="EventHub Logo" className="h-16 w-auto object-contain brightness-0 invert" />
           <div className="space-y-3">
-            <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">Welcome Back</h1>
-            <p className="text-sm text-indigo-100 leading-relaxed">Sign in to your account and pick up right where you left off.</p>
+            <h1 className="text-4xl font-extrabold tracking-tight leading-tight">Welcome Back</h1>
+            <p className="text-sm text-indigo-100 leading-relaxed">
+              Sign in to your account and pick up right where you left off.
+            </p>
           </div>
-          <div className="mt-8 space-y-5">
+          <div className="space-y-5">
             {features.map((item, i) => <FeatureItem key={i} {...item} />)}
           </div>
         </div>
@@ -143,16 +139,11 @@ export default function LoginPage() {
       </div>
 
       {/* Right Column */}
-      <div className="flex-1 flex items-center justify-center bg-white px-6 py-6 lg:px-12">
-        <div className="w-full max-w-[480px]">
-          <div className="mb-8">
+      <div className="flex-1 flex items-center justify-center bg-white px-6 py-10 lg:px-12">
+        <div className="w-full max-w-[440px]">
+          <div className="mb-5">
             <h2 className="text-2xl font-bold text-gray-900">Sign in</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Don't have an account?{" "}
-              <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
-                Sign up
-              </Link>
-            </p>
+            <p className="mt-1 text-sm text-gray-400">Welcome back.</p>
           </div>
 
           <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -184,32 +175,35 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-gray-300 hover:text-gray-500 transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               }
             />
 
-            <div className="text-right">
-              <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
+            
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-11 rounded-xl bg-[#6366f1] text-white text-sm font-semibold shadow-md transition-all duration-150 hover:bg-[#4f46e5] focus:outline-none focus:ring-4 focus:ring-indigo-100 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
-          </form>
 
-          <p className="mt-6 text-center text-xs text-gray-400">
-            Organisers are granted admin access through the platform team.
-          </p>
+            <div className="flex items-center justify-between">
+            <p className="text-center text-sm text-gray-500">
+              Don't have an account?{" "}
+              <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
+                Sign up
+              </Link>
+            </p>
+              <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>

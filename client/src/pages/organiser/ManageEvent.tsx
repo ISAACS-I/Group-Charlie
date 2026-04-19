@@ -21,6 +21,8 @@ export default function ManageEvent() {
   const [form, setForm] = useState({
     title: "Developer Meetup",
     description: "Connect with developers and explore current trends in software and innovation.",
+    hasAgeRestriction: false,
+    minAge: "",
     category: "Technology",
     date: "2026-03-28",
     time: "5:00 PM - 8:00 PM",
@@ -150,11 +152,10 @@ export default function ManageEvent() {
                       key={s}
                       type="button"
                       onClick={() => handleChange("status", s)}
-                      className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
-                        form.status === s
+                      className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${form.status === s
                           ? "bg-indigo-600 text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>

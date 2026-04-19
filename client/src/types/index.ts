@@ -14,6 +14,8 @@ export interface EventItem {
   id: string;
   title: string;
   description?: string;
+  hasAgeRestriction?: boolean;
+  minAge?: number;
   category?: string;
   registered?: string;
   date?: string;

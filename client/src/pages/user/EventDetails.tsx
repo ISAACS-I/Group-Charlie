@@ -11,6 +11,8 @@ export default function EventDetails() {
     category: "Culture • Food • Music",
     title: "Dithubaruba",
     description: "Experience culture, music, food, and tradition in one unforgettable celebration.",
+    hasAgeRestriction: true,
+    minAge: 21,
     date: "March 25, 2026",
     time: "9:00 AM - 6:00 PM",
     location: "Molepolole Stadium",
@@ -125,6 +127,9 @@ export default function EventDetails() {
           {/* Event Info */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-base font-bold text-gray-900 mb-5">Event Information</h3>
+            {event.hasAgeRestriction && event.minAge && (
+              <InfoItem icon={<Users size={16} />} label="Age Requirement" value={`${event.minAge}+`} />
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <InfoItem icon={<Calendar size={16} />} label="Date" value={event.date} />
               <InfoItem icon={<Clock size={16} />} label="Time" value={event.time} />
@@ -139,7 +144,7 @@ export default function EventDetails() {
                 </div>
               )}
             </div>
-            
+
             <a
               href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
               target="_blank"
@@ -200,6 +205,11 @@ export default function EventDetails() {
             )}
 
             <div className="mt-5 space-y-3">
+              {event.hasAgeRestriction && event.minAge && (
+                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-100 px-4 py-2.5 text-xs text-amber-700">
+                  This event is restricted to attendees aged {event.minAge} and above.
+                </div>
+              )}
               <button
                 type="button"
                 className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"

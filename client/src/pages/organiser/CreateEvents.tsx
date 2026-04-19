@@ -7,6 +7,8 @@ export default function CreateEvent() {
     name: "",
     type: "Conference",
     description: "",
+    hasAgeRestriction: false,
+    minAge: "",
     date: "",
     time: "",
     duration: "2",
@@ -24,6 +26,15 @@ export default function CreateEvent() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: checked,
+      ...(name === "hasAgeRestriction" && !checked ? { minAge: "" } : {}),
+    }));
+  };
+
   const inputClass =
     "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 placeholder:text-gray-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all";
 
@@ -34,6 +45,7 @@ export default function CreateEvent() {
       showSponsor
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* Main Form */}
         <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-base font-bold text-gray-900 mb-1">Event Details</h2>
@@ -66,6 +78,7 @@ export default function CreateEvent() {
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Event Name</label>
               <input
@@ -177,6 +190,40 @@ export default function CreateEvent() {
                 <option>Other</option>
               </select>
             </div>
+
+            {/* Age Restriction */}
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Age Restriction
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="hasAgeRestriction"
+                  checked={form.hasAgeRestriction}
+                  onChange={handleCheckbox}
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-600">This event has an age restriction</span>
+              </label>
+
+              {form.hasAgeRestriction && (
+                <div className="mt-2 flex items-center gap-3">
+                  <input
+                    type="number"
+                    name="minAge"
+                    value={form.minAge}
+                    onChange={handleChange}
+                    placeholder="e.g. 18"
+                    min="1"
+                    max="100"
+                    className={`${inputClass} w-32`}
+                  />
+                  <span className="text-sm text-gray-500">years and older</span>
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Actions */}
