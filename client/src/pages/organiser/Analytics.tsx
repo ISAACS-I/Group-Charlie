@@ -54,12 +54,6 @@ export default function Analytics() {
         });
         if (!res.ok) throw new Error("Failed to fetch analytics");
         const json = await res.json();
-<<<<<<< Updated upstream
-        setData(json);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        setError(message);
-=======
         // If all zeros and no events, still set data so we show zeros not error
         setData({
           totalAttendees: json.totalAttendees ?? 0,
@@ -71,7 +65,6 @@ export default function Analytics() {
         });
       } catch (err: any) {
         setError(err.message);
->>>>>>> Stashed changes
       } finally {
         setIsLoading(false);
       }
