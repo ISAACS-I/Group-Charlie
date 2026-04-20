@@ -23,6 +23,27 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/events/categories/counts
+// Returns count of active/upcoming events per category
+router.get('/categories/counts', async (req, res) => {
+  try {
+    const counts = await Event.aggregate([
+      { $match: { status: { $in: ['Active', 'Upcoming'] } } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+
+    // Turn array into a plain object: { Technology: 5, Music: 3, ... }
+    const result = counts.reduce((acc, item) => {
+      if (item._id) acc[item._id] = item.count;
+      return acc;
+    }, {});
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET /api/events/:id
 // Fetch single event by ID
 router.get('/:id', async (req, res) => {

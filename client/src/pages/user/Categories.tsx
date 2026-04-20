@@ -1,59 +1,36 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 const CATEGORIES = [
-  {
-    name: "Technology",
-    description: "Conferences, hackathons, developer meetups and innovation events.",
-    count: 12,
-    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  },
-  {
-    name: "Business",
-    description: "Networking nights, forums, entrepreneurship and leadership events.",
-    count: 8,
-    color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  },
-  {
-    name: "Music",
-    description: "Live performances, festivals, acoustic sessions and concerts.",
-    count: 15,
-    color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-  },
-  {
-    name: "Sports",
-    description: "Marathons, tournaments, fitness events and outdoor activities.",
-    count: 6,
-    color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-  },
-  {
-    name: "Arts & Culture",
-    description: "Exhibitions, cultural gatherings, theatre and creative showcases.",
-    count: 9,
-    color: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
-  },
-  {
-    name: "Food & Drink",
-    description: "Cooking workshops, food festivals, tastings and culinary events.",
-    count: 5,
-    color: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
-  },
-  {
-    name: "Community",
-    description: "Local meetups, charity drives, social impact and volunteer events.",
-    count: 10,
-    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-  },
-  {
-    name: "Education",
-    description: "Workshops, seminars, training sessions and learning events.",
-    count: 7,
-    color: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-  },
+  { name: "Technology",   description: "Conferences, hackathons, developer meetups and innovation events.",       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+  { name: "Business",     description: "Networking nights, forums, entrepreneurship and leadership events.",      color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
+  { name: "Music",        description: "Live performances, festivals, acoustic sessions and concerts.",           color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
+  { name: "Sports",       description: "Marathons, tournaments, fitness events and outdoor activities.",          color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" },
+  { name: "Arts & Culture", description: "Exhibitions, cultural gatherings, theatre and creative showcases.",    color: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" },
+  { name: "Food & Drink", description: "Cooking workshops, food festivals, tastings and culinary events.",       color: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)" },
+  { name: "Community",    description: "Local meetups, charity drives, social impact and volunteer events.",     color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" },
+  { name: "Education",    description: "Workshops, seminars, training sessions and learning events.",            color: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)" },
 ];
 
 export default function Categories() {
   const navigate = useNavigate();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:5001/api/events/categories/counts');
+        const data = await res.json();
+        setCounts(data);
+      } catch {
+        // silently fail — counts will just show 0
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const handleCategoryClick = (category: string) => {
     navigate(`/browse-events?category=${encodeURIComponent(category)}`);
@@ -79,31 +56,37 @@ export default function Categories() {
 
       {/* Category Grid */}
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {CATEGORIES.map((category) => (
-          <button
-            key={category.name}
-            type="button"
-            onClick={() => handleCategoryClick(category.name)}
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md text-left"
-          >
-            {/* Color Banner */}
-            <div
-              className="h-24 w-full"
-              style={{ background: category.color }}
-            />
+        {CATEGORIES.map((category) => {
+          const count = counts[category.name] ?? 0;
+          return (
+            <button
+              key={category.name}
+              type="button"
+              onClick={() => handleCategoryClick(category.name)}
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md text-left"
+            >
+              {/* Color Banner */}
+              <div className="h-24 w-full" style={{ background: category.color }} />
 
-            {/* Content */}
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-base font-bold text-gray-900">{category.name}</h3>
-                <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-600">
-                  {category.count}
-                </span>
+              {/* Content */}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-base font-bold text-gray-900">{category.name}</h3>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    loading
+                      ? 'bg-gray-100 text-gray-400'
+                      : count > 0
+                        ? 'bg-indigo-50 text-indigo-600'
+                        : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {loading ? '...' : count}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">{category.description}</p>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">{category.description}</p>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </section>
     </DashboardLayout>
   );

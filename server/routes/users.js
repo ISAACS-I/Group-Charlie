@@ -159,4 +159,16 @@ router.put('/:id/role', protect, adminOnly, async (req, res) => {
   }
 });
 
+// DELETE /api/users/me
+router.delete('/me', protect, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user._id);
+    await Booking.deleteMany({ user: req.user._id });
+    await SavedEvent.deleteMany({ user: req.user._id });
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
