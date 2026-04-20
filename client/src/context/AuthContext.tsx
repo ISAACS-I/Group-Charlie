@@ -46,19 +46,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount, restore session from localStorage
-  useEffect(() => {
+ useEffect(() => {
+  const verifySession = async () => {
     const stored = localStorage.getItem("authUser");
-    if (stored) {
+    if (!stored) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const parsed: AuthUser = JSON.parse(stored);
+
+      // Verify token with server and get latest role
+      const res = await fetch(`${API_BASE}/users/me`, {
+        headers: { Authorization: `Bearer ${parsed.token}` },
+      });
+
+      if (!res.ok) {
+        // Token expired or invalid
+        localStorage.removeItem("authUser");
+        setIsLoading(false);
+        return;
+      }
+
+      const freshUser = await res.json();
+
+      // Update with latest role from DB
+      const updatedUser: AuthUser = {
+        ...parsed,
+        role: freshUser.role,
+        firstName: freshUser.firstName,
+        lastName: freshUser.lastName,
+      };
+
+      localStorage.setItem("authUser", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch {
+      // Server unreachable — use cached data
       try {
         const parsed: AuthUser = JSON.parse(stored);
         setUser(parsed);
       } catch {
         localStorage.removeItem("authUser");
       }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  };
+
+  verifySession();
+}, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
