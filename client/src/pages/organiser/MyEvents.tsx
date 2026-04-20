@@ -1,181 +1,119 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import type { Event } from "../../types";
 
-// ===================== TYPES =====================
+const API_BASE = "http://localhost:5001/api";
 
-// These are the allowed event statuses shown in the tab filters.
-// Using a union type helps TypeScript catch mistakes.
-type EventStatus = "Upcoming" | "Past Events" | "Drafts" | "Cancelled";
-
-// This interface defines the shape of one event card.
-// Every event object in the page must follow this structure.
-interface MyEventItem {
-  id: number; // unique identifier for React rendering
-  title: string; // event title
-  category: string; // type of event such as Conference or Webinar
-  date: string; // event date and time
-  location: string; // venue or platform
-  attendees: number; // number of attendees
-  status: EventStatus; // current event state
-  imageBg?: string; // optional custom background for top image area
+function getToken(): string {
+  try {
+    const stored = localStorage.getItem("authUser");
+    return stored ? JSON.parse(stored).token : "";
+  } catch { return ""; }
 }
 
-// ===================== MOCK DATA =====================
+type TabStatus = "Upcoming" | "Past Events" | "Drafts" | "Cancelled";
 
-// Temporary data used to design the page.
-// In a real application this would come from an API or database.
-const myEventsData: MyEventItem[] = [
-  {
-    id: 1,
-    title: "Tech Summit 2024",
-    category: "Conference",
-    date: "Mar 25, 2024 • 9:00 AM",
-    location: "San Francisco Convention Center",
-    attendees: 245,
-    status: "Upcoming",
-    imageBg: "linear-gradient(135deg, #c7d2fe, #ddd6fe)",
-  },
-  {
-    id: 2,
-    title: "UX Design Masterclass",
-    category: "Workshop",
-    date: "Apr 2, 2024 • 2:00 PM",
-    location: "Creative Hub Downtown",
-    attendees: 48,
-    status: "Upcoming",
-    imageBg: "linear-gradient(135deg, #c7d2fe, #ddd6fe)",
-  },
-  {
-    id: 3,
-    title: "Startup Networking Night",
-    category: "Meetup",
-    date: "Apr 10, 2024 • 6:30 PM",
-    location: "The Innovation Lab",
-    attendees: 87,
-    status: "Upcoming",
-    imageBg: "linear-gradient(135deg, #c7d2fe, #ddd6fe)",
-  },
-  {
-    id: 4,
-    title: "Digital Marketing Trends",
-    category: "Webinar",
-    date: "Apr 18, 2024 • 11:00 AM",
-    location: "Online Event",
-    attendees: 312,
-    status: "Upcoming",
-    imageBg: "linear-gradient(135deg, #c7d2fe, #ddd6fe)",
-  },
-  {
-    id: 5,
-    title: "Business Growth Forum",
-    category: "Conference",
-    date: "Jan 11, 2024 • 10:00 AM",
-    location: "Grand Hall",
-    attendees: 190,
-    status: "Past Events",
-    imageBg: "linear-gradient(135deg, #e5e7eb, #d1d5db)",
-  },
-  {
-    id: 6,
-    title: "Design Sprint Bootcamp",
-    category: "Workshop",
-    date: "May 5, 2024 • 1:00 PM",
-    location: "Studio 24",
-    attendees: 0,
-    status: "Drafts",
-    imageBg: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
-  },
-  {
-    id: 7,
-    title: "Investor Mixer",
-    category: "Meetup",
-    date: "Feb 9, 2024 • 7:00 PM",
-    location: "Sky Lounge",
-    attendees: 0,
-    status: "Cancelled",
-    imageBg: "linear-gradient(135deg, #fee2e2, #fecaca)",
-  },
-];
+// Map DB status → tab
+function getTab(status: string | undefined, date: string | undefined): TabStatus {
+  if (status === "Draft")    return "Drafts";
+  if (status === "Active" || status === "Upcoming") {
+    const isPast = date ? new Date(date) < new Date() : false;
+    return isPast ? "Past Events" : "Upcoming";
+  }
+  return "Cancelled";
+}
 
-// ===================== SMALL UI HELPERS =====================
-
-// This small reusable component is used for the tabs at the top.
-// It changes appearance depending on whether the tab is active.
-function StatusTab({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: EventStatus;
-  count: number;
-  active: boolean;
-  onClick: () => void;
+function StatusTab({ label, count, active, onClick }: {
+  label: string; count: number; active: boolean; onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${active
+      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+        active
           ? "bg-indigo-600 text-white"
           : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-        }`}
+      }`}
     >
       {label} ({count})
     </button>
   );
 }
 
-// This component displays one event card.
-// It matches the card layout shown in the screenshot.
 function MyEventCard({
   event,
-  onManage
+  onManage,
+  onDelete,
 }: {
-  event: MyEventItem;
-  onManage?: (event: MyEventItem) => void;
-  onEdit?: (event: MyEventItem) => void;
-  onDelete?: (event: MyEventItem) => void;
+  event: Event;
+  onManage: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_BASE}/events/${event._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok) onDelete(event._id);
+    } catch {
+      alert("Failed to delete event");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const dateStr = event.date
+    ? new Date(event.date).toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+      })
+    : "No date set";
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
-      {/* Top decorative image/banner area */}
       <div
         className="h-36 w-full"
-        style={{
-          background:
-            event.imageBg ?? "linear-gradient(135deg, #c7d2fe, #ddd6fe)",
-        }}
+        style={{ background: event.imageBg ?? "linear-gradient(135deg, #c7d2fe, #ddd6fe)" }}
       />
-
-      {/* Content section */}
       <div className="p-4">
-        {/* Top row with category*/}
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <p className="text-sm text-gray-500">{event.category}</p>
-          </div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-400">{event.category}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+            event.status === "Active"   ? "bg-emerald-50 text-emerald-600" :
+            event.status === "Upcoming" ? "bg-indigo-50 text-indigo-600"  :
+            event.status === "Draft"    ? "bg-yellow-50 text-yellow-600"  :
+                                          "bg-gray-100 text-gray-500"
+          }`}>
+            {event.status}
+          </span>
+        </div>
 
-        {/* Main event details */}
-        <h3 className="text-base font-semibold leading-tight text-gray-900">
-          {event.title}
-        </h3>
+        <h3 className="text-base font-semibold leading-tight text-gray-900">{event.title}</h3>
+        <p className="mt-1 text-sm text-gray-400">{dateStr}{event.time ? ` • ${event.time}` : ""}</p>
+        <p className="mt-0.5 text-sm text-gray-400">{event.location || "No location set"}</p>
+        <p className="mt-0.5 text-xs text-gray-400">{event.capacity ? `${event.capacity} capacity` : ""}</p>
 
-        <p className="mt-1 text-sm text-gray-400">{event.date}</p>
-        <p className="mt-1 text-sm text-gray-400">{event.location}</p>
-
-        {/* Bottom row with attendee count and manage button */}
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-gray-700">
-            {event.attendees} attendees
-          </p>
-
+        <div className="mt-4 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => onManage?.(event)}
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            onClick={() => onManage(event._id)}
+            className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            Manage Event
+            Manage
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
+          >
+            {deleting ? "..." : "Delete"}
           </button>
         </div>
       </div>
@@ -183,90 +121,78 @@ function MyEventCard({
   );
 }
 
-// ===================== PAGE COMPONENT =====================
-
 export default function MyEventsPage() {
-  // This stores the currently selected status tab.
-  // The page starts by showing "Upcoming" events.
-  const [activeTab, setActiveTab] = useState<EventStatus>("Upcoming");
-
   const navigate = useNavigate();
 
-  // This stores the text the user types into the search field.
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // This stores the selected category filter.
-  // "All Categories" means no category filter is applied.
+  const [events,          setEvents]          = useState<Event[]>([]);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState<string | null>(null);
+  const [activeTab,       setActiveTab]       = useState<TabStatus>("Upcoming");
+  const [searchTerm,      setSearchTerm]      = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [sortOption,      setSortOption]      = useState("Sort by Date");
 
-  // This stores the selected sort option.
-  // For now this controls only simple front-end sorting.
-  const [sortOption, setSortOption] = useState("Sort by Date");
+  // ─── Fetch organiser's events ─────────────────────────────────────────────
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/events/my`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error("Failed to load events");
+      const data: Event[] = await res.json();
+      setEvents(data);
+    } catch {
+      setError("Could not load your events");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // This creates a unique list of categories from the event data.
-  // Set is used to remove duplicates.
+  useEffect(() => { loadEvents(); }, [loadEvents]);
+
+  // Remove deleted event from state without refetching
+  const handleDelete = (id: string) =>
+    setEvents(prev => prev.filter(e => e._id !== id));
+
+  // ─── Tab counts ───────────────────────────────────────────────────────────
+  const tabCounts = useMemo(() => ({
+    "Upcoming":    events.filter(e => getTab(e.status, String(e.date)) === "Upcoming").length,
+    "Past Events": events.filter(e => getTab(e.status, String(e.date)) === "Past Events").length,
+    "Drafts":      events.filter(e => getTab(e.status, String(e.date)) === "Drafts").length,
+    "Cancelled":   events.filter(e => getTab(e.status, String(e.date)) === "Cancelled").length,
+  }), [events]);
+
+  // ─── Category options from real data ─────────────────────────────────────
   const categoryOptions = useMemo(() => {
-    const uniqueCategories = new Set(myEventsData.map((event) => event.category));
-    return ["All Categories", ...Array.from(uniqueCategories)];
-  }, []);
+    const unique = new Set(events.map(e => e.category).filter(Boolean));
+    return ["All Categories", ...Array.from(unique)] as string[];
+  }, [events]);
 
-  // This object calculates how many events belong to each status.
-  // These counts are used inside the tab buttons.
-  const tabCounts = useMemo(() => {
-    return {
-      Upcoming: myEventsData.filter((event) => event.status === "Upcoming").length,
-      "Past Events": myEventsData.filter((event) => event.status === "Past Events").length,
-      Drafts: myEventsData.filter((event) => event.status === "Drafts").length,
-      Cancelled: myEventsData.filter((event) => event.status === "Cancelled").length,
-    };
-  }, []);
-
-  // This computes the list of events that should be displayed.
-  // Filtering is based on:
-  // 1. active tab
-  // 2. search text
-  // 3. selected category
-  // Then sorting is applied.
+  // ─── Filtered + sorted events ─────────────────────────────────────────────
   const filteredEvents = useMemo(() => {
-    let result = myEventsData.filter((event) => {
-      const matchesTab = event.status === activeTab;
-
-      const matchesSearch =
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesCategory =
-        selectedCategory === "All Categories" ||
-        event.category === selectedCategory;
-
+    let result = events.filter(e => {
+      const tab = getTab(e.status, String(e.date));
+      const matchesTab      = tab === activeTab;
+      const matchesSearch   = !searchTerm ||
+        e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.category ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.location ?? "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === "All Categories" || e.category === selectedCategory;
       return matchesTab && matchesSearch && matchesCategory;
     });
 
-    // Simple front-end sorting example.
-    // Since the dates are sample strings, this is mostly illustrative.
     if (sortOption === "Sort by Attendance") {
-      result = [...result].sort((a, b) => b.attendees - a.attendees);
+      result = [...result].sort((a, b) => (b.capacity ?? 0) - (a.capacity ?? 0));
     } else {
-      result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+      result = [...result].sort((a, b) =>
+        new Date(String(b.date)).getTime() - new Date(String(a.date)).getTime()
+      );
     }
 
     return result;
-  }, [activeTab, searchTerm, selectedCategory, sortOption]);
-
-  // These handler functions are placeholders for future logic.
-  // Right now they just show where actions would be added later.
-  const handleManageEvent = (event: MyEventItem) => {
-    navigate(`/my-events/${event.id}`);
-  };
-
-  const handleEditEvent = (event: MyEventItem) => {
-    console.log("Edit event:", event.title);
-  };
-
-  const handleDeleteEvent = (event: MyEventItem) => {
-    console.log("Delete event:", event.title);
-  };
+  }, [events, activeTab, searchTerm, selectedCategory, sortOption]);
 
   return (
     <DashboardLayout
@@ -275,108 +201,114 @@ export default function MyEventsPage() {
       showSponsor
     >
       <div className="space-y-5">
-        {/* ===================== STATUS TABS ===================== */}
+
+        {/* Tabs */}
         <section className="flex flex-wrap gap-3">
-          <StatusTab
-            label="Upcoming"
-            count={tabCounts.Upcoming}
-            active={activeTab === "Upcoming"}
-            onClick={() => setActiveTab("Upcoming")}
-          />
-
-          <StatusTab
-            label="Past Events"
-            count={tabCounts["Past Events"]}
-            active={activeTab === "Past Events"}
-            onClick={() => setActiveTab("Past Events")}
-          />
-
-          <StatusTab
-            label="Drafts"
-            count={tabCounts.Drafts}
-            active={activeTab === "Drafts"}
-            onClick={() => setActiveTab("Drafts")}
-          />
-
-          <StatusTab
-            label="Cancelled"
-            count={tabCounts.Cancelled}
-            active={activeTab === "Cancelled"}
-            onClick={() => setActiveTab("Cancelled")}
-          />
+          {(["Upcoming", "Past Events", "Drafts", "Cancelled"] as TabStatus[]).map(tab => (
+            <StatusTab
+              key={tab}
+              label={tab}
+              count={tabCounts[tab]}
+              active={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+            />
+          ))}
         </section>
 
-        {/* ===================== SEARCH ===================== */}
+        {/* Search */}
         <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
               type="text"
               placeholder="Search events..."
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-indigo-500"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-indigo-500"
             />
-
-            {/* This button visually matches the design.
-                Filtering already happens live as the user types. */}
             <button
               type="button"
-              className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+              className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white hover:bg-indigo-700"
             >
               Search
             </button>
           </div>
         </section>
 
-        {/* ===================== FILTERS ===================== */}
+        {/* Filters */}
         <section className="flex flex-col gap-3 sm:flex-row">
           <select
             value={selectedCategory}
-            onChange={(event) => setSelectedCategory(event.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-indigo-500"
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none focus:border-indigo-500"
           >
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
+            {categoryOptions.map(c => <option key={c}>{c}</option>)}
           </select>
 
           <select
             value={sortOption}
-            onChange={(event) => setSortOption(event.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-indigo-500"
+            onChange={(e) => setSortOption(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none focus:border-indigo-500"
           >
-            <option value="Sort by Date">Sort by Date</option>
-            <option value="Sort by Attendance">Sort by Attendance</option>
+            <option>Sort by Date</option>
+            <option>Sort by Attendance</option>
           </select>
         </section>
 
-        {/* ===================== EVENT GRID ===================== */}
+        {/* Grid */}
         <section>
-          {filteredEvents.length > 0 ? (
+          {loading && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {filteredEvents.map((event) => (
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-64 rounded-2xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
+              <p className="text-sm font-medium text-red-600">{error}</p>
+              <button
+                onClick={loadEvents}
+                className="mt-3 rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredEvents.length > 0 && (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {filteredEvents.map(event => (
                 <MyEventCard
-                  key={event.id}
+                  key={event._id}
                   event={event}
-                  onManage={handleManageEvent}
-                  onEdit={handleEditEvent}
-                  onDelete={handleDeleteEvent}
+                  onManage={(id) => navigate(`/my-events/${id}`)}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
-              <h3 className="text-xl font-semibold text-gray-900">
-                No events found
-              </h3>
+          )}
+
+          {!loading && !error && filteredEvents.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
+              <h3 className="text-xl font-semibold text-gray-900">No events found</h3>
               <p className="mt-2 text-sm text-gray-400">
-                Try changing the tab, search term, or filters.
+                {events.length === 0
+                  ? "You haven't created any events yet."
+                  : "Try changing the tab, search term, or filters."}
               </p>
+              {events.length === 0 && (
+                <button
+                  onClick={() => navigate("/create-event")}
+                  className="mt-4 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                  Create your first event
+                </button>
+              )}
             </div>
           )}
         </section>
+
       </div>
     </DashboardLayout>
   );
