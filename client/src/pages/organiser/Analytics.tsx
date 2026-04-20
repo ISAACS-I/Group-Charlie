@@ -128,6 +128,7 @@ export default function Analytics() {
       right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
     };
 
+    // ── SUMMARY SHEET ────────────────────────────────
     const summary = wb.addWorksheet('Summary');
     summary.columns = [{ width: 28 }, { width: 30 }];
     summary.mergeCells('A1:B1');
@@ -154,6 +155,127 @@ export default function Analytics() {
       row.eachCell(cell => { cell.border = border; });
       row.getCell(1).font = { color: { argb: 'FF6B7280' }, size: 10 };
       row.getCell(2).font = { bold: true, size: 10 };
+    });
+    summary.addRow([]);
+    summary.mergeCells(`A${summary.rowCount + 1}:B${summary.rowCount + 1}`);
+    const topHeader = summary.getCell(`A${summary.rowCount}`);
+    topHeader.value = 'TOP PERFORMER';
+    topHeader.fill = headerFill;
+    topHeader.font = headerFont;
+    topHeader.alignment = { horizontal: 'center' };
+    [['Event Name', data.top?.name ?? 'N/A'], ['Attendees', data.top?.sub ?? 'N/A'], ['Check-in Rate', data.top ? `${data.top.progress}%` : 'N/A']].forEach(([label, value]) => {
+      const row = summary.addRow([label, value]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(1).font = { color: { argb: 'FF6B7280' }, size: 10 };
+      row.getCell(2).font = { bold: true, size: 10 };
+    });
+
+    // ── PERFORMANCE SHEET ────────────────────────────
+    const perf = wb.addWorksheet('Performance');
+    perf.columns = [{ width: 8 }, { width: 35 }, { width: 18 }, { width: 20 }, { width: 20 }];
+    perf.mergeCells('A1:E1');
+    const perfTitle = perf.getCell('A1');
+    perfTitle.value = 'EVENT PERFORMANCE BREAKDOWN';
+    perfTitle.font = titleFont;
+    perfTitle.alignment = { horizontal: 'center' };
+    perf.addRow([]);
+    const perfColHeader = perf.addRow(['Rank', 'Event Name', 'Total Attendees', 'Check-in Rate (%)', 'Rating']);
+    perfColHeader.eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = border; cell.alignment = { horizontal: 'center' }; });
+    const sorted = [...data.performance].sort((a, b) => b.progress - a.progress);
+    sorted.forEach((event, i) => {
+      const rating = event.progress >= 80 ? 'Excellent' : event.progress >= 60 ? 'Good' : 'Needs Improvement';
+      const ratingColor = event.progress >= 80 ? 'FF059669' : event.progress >= 60 ? 'FF2563EB' : 'FFDC2626';
+      const row = perf.addRow([`#${i + 1}`, event.name, event.total, event.progress, rating]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(1).alignment = { horizontal: 'center' };
+      row.getCell(3).alignment = { horizontal: 'center' };
+      row.getCell(4).alignment = { horizontal: 'center' };
+      row.getCell(5).font = { bold: true, color: { argb: ratingColor } };
+      row.getCell(5).alignment = { horizontal: 'center' };
+    });
+
+    // ── MONTHLY ATTENDANCE SHEET ─────────────────────
+    const monthly = wb.addWorksheet('Monthly Attendance');
+    monthly.columns = [{ width: 15 }, { width: 18 }];
+    monthly.mergeCells('A1:B1');
+    const monthlyTitle = monthly.getCell('A1');
+    monthlyTitle.value = 'MONTHLY ATTENDANCE TREND';
+    monthlyTitle.font = titleFont;
+    monthlyTitle.alignment = { horizontal: 'center' };
+    monthly.addRow([]);
+    const monthlyColHeader = monthly.addRow(['Month', 'Attendees']);
+    monthlyColHeader.eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = border; cell.alignment = { horizontal: 'center' }; });
+    data.attendanceData.forEach(m => {
+      const row = monthly.addRow([m.month, m.value]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(2).alignment = { horizontal: 'center' };
+    });
+    monthly.addRow([]);
+    const total = data.attendanceData.reduce((sum, m) => sum + m.value, 0);
+    const avg = Math.round(total / (data.attendanceData.length || 1));
+    const totalRow = monthly.addRow(['Total', total]);
+    totalRow.eachCell(cell => { cell.font = { bold: true }; cell.fill = subHeaderFill; cell.border = border; });
+    const avgRow = monthly.addRow(['Average', avg]);
+    avgRow.eachCell(cell => { cell.font = { bold: true }; cell.fill = subHeaderFill; cell.border = border; });
+
+    // ── AGE GROUPS SHEET ─────────────────────────────
+    const age = wb.addWorksheet('Audience Demographics');
+    age.columns = [{ width: 20 }, { width: 18 }, { width: 18 }];
+    age.mergeCells('A1:C1');
+    const ageTitle = age.getCell('A1');
+    ageTitle.value = 'AUDIENCE AGE GROUP BREAKDOWN';
+    ageTitle.font = titleFont;
+    ageTitle.alignment = { horizontal: 'center' };
+    age.addRow([]);
+    const ageColHeader = age.addRow(['Age Group', 'Count', 'Percentage']);
+    ageColHeader.eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = border; cell.alignment = { horizontal: 'center' }; });
+    data.ageData.forEach(group => {
+      const percentage = data.totalAttendees > 0 ? Math.round((group.count / data.totalAttendees) * 100) : 0;
+      const row = age.addRow([group.group, group.count, `${percentage}%`]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(2).alignment = { horizontal: 'center' };
+      row.getCell(3).alignment = { horizontal: 'center' };
+    });
+
+    // ── INSIGHTS SHEET ───────────────────────────────
+    const insights = wb.addWorksheet('Insights');
+    insights.columns = [{ width: 30 }, { width: 55 }];
+    insights.mergeCells('A1:B1');
+    const insightsTitle = insights.getCell('A1');
+    insightsTitle.value = 'KEY INSIGHTS & RECOMMENDATIONS';
+    insightsTitle.font = titleFont;
+    insightsTitle.alignment = { horizontal: 'center' };
+    insights.addRow([]);
+    const insightsColHeader = insights.addRow(['Insight', 'Details']);
+    insightsColHeader.eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = border; });
+    [
+      ['Total Reach', `${data.totalAttendees.toLocaleString()} attendees across all events`],
+      ['Overall Health', `Average attendance rate of ${data.attendanceRate}%`],
+      ['Portfolio Size', `${data.performance.length} active events`],
+      ['Best Performer', `${data.top?.name ?? 'N/A'} at ${data.top?.progress ?? 0}% check-in rate`],
+    ].forEach(([label, value]) => {
+      const row = insights.addRow([label, value]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(1).font = { bold: true, size: 10 };
+      row.getCell(2).font = { color: { argb: 'FF6B7280' }, size: 10 };
+    });
+    insights.addRow([]);
+    insights.mergeCells(`A${insights.rowCount + 1}:B${insights.rowCount + 1}`);
+    const recHeader = insights.getCell(`A${insights.rowCount}`);
+    recHeader.value = 'RECOMMENDATIONS';
+    recHeader.fill = headerFill;
+    recHeader.font = headerFont;
+    recHeader.alignment = { horizontal: 'center' };
+    [
+      ['Focus on top performers', 'Replicate successful event formats and timing'],
+      ['Boost lower performers', 'Consider marketing push for events under 70% check-in'],
+      ['Track monthly trends', 'Monitor attendance patterns to spot seasonal dips'],
+      ['Export regularly', 'Keep reports before presentations or stakeholder reviews'],
+    ].forEach(([label, value]) => {
+      const row = insights.addRow([label, value]);
+      row.eachCell(cell => { cell.border = border; });
+      row.getCell(1).font = { bold: true, size: 10 };
+      row.getCell(2).font = { color: { argb: 'FF6B7280' }, size: 10 };
     });
 
     const buffer = await wb.xlsx.writeBuffer();

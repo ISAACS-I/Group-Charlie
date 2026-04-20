@@ -5,21 +5,26 @@ const Booking = require('../models/Booking');
 const Event = require('../models/Event');
 const User = require('../models/User');
 
-// GET /api/analytics - Auth bypassed for development
-router.get('/', async (req, res) => {
+// GET /api/analytics
+router.get('/', protect, adminOnly, async (req, res) => {
   try {
-    const adminUser = await User.findOne({ email: 'demo@eventhub.com' });
-
-    if (!adminUser) {
-      return res.status(500).json({ message: 'Admin user not found. Run seed script first.' });
-    }
-
-    req.user = adminUser;
     const organiserId = req.user._id;
 
     // Get all events by this organiser
     const events = await Event.find({ organiser: organiserId });
     const eventIds = events.map(e => e._id);
+
+    // If no events yet return empty data
+    if (events.length === 0) {
+      return res.json({
+        totalAttendees: 0,
+        attendanceRate: 0,
+        attendanceData: [],
+        performance: [],
+        top: null,
+        ageData: [],
+      });
+    }
 
     // Total attendees across all events
     const totalAttendees = await Booking.countDocuments({
@@ -79,7 +84,7 @@ router.get('/', async (req, res) => {
     );
 
     // Top performing event
-    const top = performance.sort((a, b) => b.total - a.total)[0] ?? null;
+    const top = [...performance].sort((a, b) => b.total - a.total)[0] ?? null;
 
     // Age group breakdown from attendee DOBs
     const now = new Date();
@@ -90,7 +95,6 @@ router.get('/', async (req, res) => {
     const attendees = await User.find({ _id: { $in: bookedUserIds } }).select('dob');
 
     const ageGroups = { 'Under 18': 0, '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
-
     attendees.forEach(user => {
       if (!user.dob) return;
       const age = Math.floor((now - new Date(user.dob)) / (365.25 * 24 * 60 * 60 * 1000));

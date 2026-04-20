@@ -6,10 +6,6 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const SavedEvent = require('../models/SavedEvent');
 
-// ─────────────────────────────────────────
-// PROFILE
-// ─────────────────────────────────────────
-
 // GET /api/users/me
 router.get('/me', protect, async (req, res) => {
   try {
@@ -52,10 +48,6 @@ router.put('/me/password', protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────
-// MY PASS / QR
-// ─────────────────────────────────────────
-
 // GET /api/users/me/qr
 router.get('/me/qr', protect, async (req, res) => {
   try {
@@ -82,9 +74,6 @@ router.get('/me/qr', protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────
-// BOOKINGS
-// ─────────────────────────────────────────
 
 // GET /api/users/me/bookings
 router.get('/me/bookings', protect, async (req, res) => {
@@ -98,9 +87,6 @@ router.get('/me/bookings', protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────
-// SAVED EVENTS
-// ─────────────────────────────────────────
 
 // GET /api/users/me/saved
 router.get('/me/saved', protect, async (req, res) => {
@@ -143,9 +129,6 @@ router.delete('/me/saved/:eventId', protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────
-// ADMIN ONLY
-// ─────────────────────────────────────────
 
 // GET /api/users
 router.get('/', protect, adminOnly, async (req, res) => {
