@@ -1,36 +1,68 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Calendar, Clock, MapPin, Users, Tag, Wallet, Mail, Phone, Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Calendar, Clock, MapPin, Users, Tag, Wallet, Mail, Phone, Plus, X, Heart } from "lucide-react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { useAuth } from "../../context/AuthContext";
+import type { Event } from "../../types";
+import {
+  fetchEventById,
+  bookEvent,
+  saveEvent,
+  unsaveEvent,
+  isEventSaved,
+} from "../../utils/eventApi";
 
 export default function EventDetails() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const event = {
-    id,
-    category: "Culture • Food • Music",
-    title: "Dithubaruba",
-    description: "Experience culture, music, food, and tradition in one unforgettable celebration.",
-    hasAgeRestriction: true,
-    minAge: 21,
-    date: "March 25, 2026",
-    time: "9:00 AM - 6:00 PM",
-    location: "Molepolole Stadium",
-    directions: "From the main road, turn left at the BP garage. The stadium is the second building on the right.",
-    spotsLeft: 247,
-    totalSpots: 500,
-    price: "P50",
-    imageBg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    organiserName: "EventHub Cultural Team",
-    organiserEmail: "culture@eventhub.com",
-    organiserPhone: "+267 70000000",
-  };
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isBooked, setIsBooked] = useState(false);
 
+  // Group booking states
   const [members, setMembers] = useState<{ name: string; email: string }[]>([]);
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [groupSent, setGroupSent] = useState(false);
   const [groupError, setGroupError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+
+  // Button states
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+
+  // Fetch event on mount
+  useEffect(() => {
+    const loadEvent = async () => {
+      if (!id) {
+        setError("Event ID not found");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await fetchEventById(id);
+        setEvent(data);
+
+        // Check if event is saved
+        if (user) {
+          const saved = await isEventSaved(id);
+          setIsSaved(saved);
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err.message : "Failed to load event details";
+        setError(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvent();
+  }, [id, user]);
 
   const addMember = () => setMembers([...members, { name: "", email: "" }]);
 
@@ -41,6 +73,55 @@ export default function EventDetails() {
     const updated = [...members];
     updated[index] = { ...updated[index], [field]: value };
     setMembers(updated);
+  };
+
+  const handleBookEvent = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/browse-events/${id}` } });
+      return;
+    }
+
+    setIsBooking(true);
+    setBookingMessage(null);
+
+    try {
+      await bookEvent(id!);
+      setIsBooked(true);
+      setBookingMessage({ type: "success", text: "Event booked successfully! Check your bookings." });
+      setTimeout(() => setBookingMessage(null), 5000);
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "Failed to book event";
+      setBookingMessage({
+        type: "error",
+        text: error,
+      });
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const handleSaveEvent = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/browse-events/${id}` } });
+      return;
+    }
+
+    setIsSavingEvent(true);
+
+    try {
+      if (isSaved) {
+        await unsaveEvent(id!);
+        setIsSaved(false);
+      } else {
+        await saveEvent(id!);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "Failed to save event";
+      console.error("Error toggling save:", error);
+    } finally {
+      setIsSavingEvent(false);
+    }
   };
 
   const handleGroupBooking = async () => {
@@ -54,13 +135,21 @@ export default function EventDetails() {
     setIsSending(true);
 
     try {
+      const authUser = JSON.parse(localStorage.getItem("authUser") || "{}");
+      const token = authUser.token;
+
+      if (!token) {
+        navigate("/login", { state: { from: `/browse-events/${id}` } });
+        return;
+      }
+
       const res = await fetch("http://localhost:5001/api/bookings/group", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ eventId: event.id, members }),
+        body: JSON.stringify({ eventId: id, members }),
       });
 
       if (!res.ok) throw new Error("Failed to send group booking");
@@ -68,12 +157,57 @@ export default function EventDetails() {
       setGroupSent(true);
       setMembers([]);
       setShowGroupForm(false);
-    } catch (err: any) {
-      setGroupError(err.message);
+      setTimeout(() => setGroupSent(false), 5000);
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "Failed to send group booking";
+      setGroupError(error);
     } finally {
       setIsSending(false);
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <DashboardLayout
+        title="Event Details"
+        subtitle="Loading event information..."
+        showSponsor
+      >
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error state
+  if (error || !event) {
+    return (
+      <DashboardLayout
+        title="Event Details"
+        subtitle="Error loading event"
+        showSponsor
+      >
+        <div className="max-w-2xl mx-auto rounded-2xl border border-red-100 bg-red-50 p-6">
+          <h3 className="text-lg font-bold text-red-900 mb-2">Unable to Load Event</h3>
+          <p className="text-sm text-red-700 mb-4">{error || "Event not found"}</p>
+          <button
+            onClick={() => navigate("/browse-events")}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors"
+          >
+            Back to Events
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const organiserName = event.organiser
+    ? `${event.organiser.firstName} ${event.organiser.lastName}`
+    : "Event Organiser";
+  const organiserEmail = event.organiser?.email || "";
+  const organiserPhone = event.organiser?.phone || "";
 
   return (
     <DashboardLayout
@@ -85,7 +219,7 @@ export default function EventDetails() {
       <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-8">
         <div className="relative z-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
-            {event.category}
+            {event.category || "Event"}
           </span>
           <h2 className="mt-2 text-4xl font-bold text-white">{event.title}</h2>
           <p className="mt-2 text-sm text-indigo-100 max-w-2xl mb-6">{event.description}</p>
@@ -96,8 +230,8 @@ export default function EventDetails() {
               <p className="text-sm font-semibold text-white">QR Access Included</p>
             </div>
             <div className="rounded-xl bg-white/20 px-4 py-2.5 backdrop-blur-sm border border-white/30">
-              <p className="text-[10px] uppercase text-white/80">Available Spots</p>
-              <p className="text-sm font-semibold text-white">{event.spotsLeft} / {event.totalSpots} Left</p>
+              <p className="text-[10px] uppercase text-white/80">Status</p>
+              <p className="text-sm font-semibold text-white">{event.status || "Active"}</p>
             </div>
           </div>
         </div>
@@ -111,10 +245,21 @@ export default function EventDetails() {
         <div className="lg:col-span-2 space-y-6">
           {/* Photo Gallery */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-2 h-56 rounded-2xl" style={{ background: event.imageBg }} />
+            <div
+              className="col-span-2 h-56 rounded-2xl"
+              style={{
+                background: event.imageBg || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+            />
             <div className="flex flex-col gap-2">
-              <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }} />
-              <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }} />
+              <div
+                className="flex-1 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }}
+              />
+              <div
+                className="flex-1 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}
+              />
             </div>
           </div>
 
@@ -131,12 +276,24 @@ export default function EventDetails() {
               <InfoItem icon={<Users size={16} />} label="Age Requirement" value={`${event.minAge}+`} />
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <InfoItem icon={<Calendar size={16} />} label="Date" value={event.date} />
-              <InfoItem icon={<Clock size={16} />} label="Time" value={event.time} />
-              <InfoItem icon={<MapPin size={16} />} label="Venue" value={event.location} />
-              <InfoItem icon={<Users size={16} />} label="Available Spots" value={`${event.spotsLeft} / ${event.totalSpots}`} />
-              <InfoItem icon={<Tag size={16} />} label="Category" value={event.category} />
-              <InfoItem icon={<Wallet size={16} />} label="Entry Fee" value={event.price} />
+              {event.date && (
+                <InfoItem icon={<Calendar size={16} />} label="Date" value={String(event.date).split("T")[0]} />
+              )}
+              {event.time && <InfoItem icon={<Clock size={16} />} label="Time" value={event.time} />}
+              {event.location && (
+                <InfoItem icon={<MapPin size={16} />} label="Venue" value={event.location} />
+              )}
+              {event.capacity && (
+                <InfoItem icon={<Users size={16} />} label="Capacity" value={`${event.capacity} Spots`} />
+              )}
+              {event.category && <InfoItem icon={<Tag size={16} />} label="Category" value={event.category} />}
+              {typeof event.price === "number" && (
+                <InfoItem
+                  icon={<Wallet size={16} />}
+                  label="Entry Fee"
+                  value={event.price === 0 ? "Free" : `P${event.price}`}
+                />
+              )}
               {event.directions && (
                 <div className="space-y-1 sm:col-span-2">
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Directions</p>
@@ -145,33 +302,45 @@ export default function EventDetails() {
               )}
             </div>
 
-            <a
-              href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-            >
-              <MapPin size={14} />
-              View on Google Maps
-            </a>
+            {event.location && (
+              <a
+                href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                <MapPin size={14} />
+                View on Google Maps
+              </a>
+            )}
           </div>
 
           {/* Organiser */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Organiser Details</h3>
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                O
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">{event.organiserName}</p>
-                <div className="mt-1 space-y-1 text-xs text-gray-400">
-                  <span className="flex items-center gap-2"><Mail size={12} />{event.organiserEmail}</span>
-                  <span className="flex items-center gap-2"><Phone size={12} />{event.organiserPhone}</span>
+          {event.organiser && (
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <h3 className="text-base font-bold text-gray-900 mb-4">Organiser Details</h3>
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {event.organiser.firstName[0]}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">{organiserName}</p>
+                  <div className="mt-1 space-y-1 text-xs text-gray-400">
+                    <span className="flex items-center gap-2">
+                      <Mail size={12} />
+                      {organiserEmail}
+                    </span>
+                    {organiserPhone && (
+                      <span className="flex items-center gap-2">
+                        <Phone size={12} />
+                        {organiserPhone}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column — Registration Sidebar */}
@@ -186,17 +355,31 @@ export default function EventDetails() {
             <div className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Fee</span>
-                <span className="font-bold text-gray-900">{event.price}</span>
+                <span className="font-bold text-gray-900">
+                  {typeof event.price === "number" ? (event.price === 0 ? "Free" : `P${event.price}`) : "TBD"}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Spots Left</span>
-                <span className="font-bold text-gray-900">{event.spotsLeft}</span>
+                <span className="text-gray-400">Capacity</span>
+                <span className="font-bold text-gray-900">{event.capacity || "Unlimited"}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-4">
                 <span className="text-gray-400">Access</span>
                 <span className="font-bold text-gray-900">QR Code Ticket</span>
               </div>
             </div>
+
+            {bookingMessage && (
+              <div
+                className={`mt-4 rounded-xl border px-4 py-3 text-xs font-medium ${
+                  bookingMessage.type === "success"
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                    : "border-red-100 bg-red-50 text-red-700"
+                }`}
+              >
+                {bookingMessage.type === "success" ? "✓" : "✕"} {bookingMessage.text}
+              </div>
+            )}
 
             {groupSent && (
               <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-xs font-medium text-emerald-700">
@@ -212,15 +395,28 @@ export default function EventDetails() {
               )}
               <button
                 type="button"
-                className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
+                onClick={handleBookEvent}
+                disabled={isBooking || isBooked}
+                className={`w-full rounded-xl py-3 text-sm font-bold transition-colors ${
+                  isBooked
+                    ? "bg-green-100 text-green-700 cursor-not-allowed"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                }`}
               >
-                Register Now
+                {isBooking ? "Booking..." : isBooked ? "✓ Event Booked" : "Register Now"}
               </button>
               <button
                 type="button"
-                className="w-full rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-200"
+                onClick={handleSaveEvent}
+                disabled={isSavingEvent}
+                className={`w-full rounded-xl py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+                  isSaved
+                    ? "bg-pink-100 text-pink-600 hover:bg-pink-200"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                } disabled:opacity-50`}
               >
-                Save Event
+                <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
+                {isSavingEvent ? "..." : isSaved ? "Saved" : "Save Event"}
               </button>
             </div>
 
@@ -269,9 +465,7 @@ export default function EventDetails() {
                     </div>
                   ))}
 
-                  {groupError && (
-                    <p className="text-xs text-red-500">{groupError}</p>
-                  )}
+                  {groupError && <p className="text-xs text-red-500">{groupError}</p>}
 
                   <button
                     type="button"
@@ -302,7 +496,7 @@ export default function EventDetails() {
               <h4 className="text-xs font-bold text-gray-900 mb-2">Registration Notes</h4>
               <ul className="space-y-1.5 text-[11px] text-gray-400 list-disc pl-4">
                 <li>Bring your QR code on event day.</li>
-                <li>Registration closes once spots are filled.</li>
+                <li>Registration closes once event has commenced.</li>
                 <li>Refund policy may depend on organiser rules.</li>
               </ul>
             </div>

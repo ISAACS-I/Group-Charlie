@@ -27,3 +27,49 @@ export interface EventItem {
   imageBg?: string;
   buttonText?: string;
 }
+
+export interface Event {
+  _id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  type?: string;
+  date?: string | Date;
+  time?: string;
+  duration?: string;
+  location?: string;
+  directions?: string;
+  price?: number;
+  imageBg?: string;
+  status?: "Active" | "Upcoming" | "Draft";
+  organiser?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  };
+  capacity?: number;
+  hasAgeRestriction?: boolean;
+  minAge?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Booking {
+  _id: string;
+  user: string;
+  event: Event;
+  status: "confirmed" | "pending" | "cancelled";
+  scannedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavedEvent {
+  _id: string;
+  user: string;
+  event: Event;
+  createdAt: string;
+  updatedAt: string;
+}
