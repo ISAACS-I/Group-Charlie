@@ -26,6 +26,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (data: SignUpData) => Promise<void>;
   signOut: () => void;
+  updateUser: (updates: Partial<AuthUser>) => void; // ← NEW
 }
 
 export interface SignUpData {
@@ -46,56 +47,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
- useEffect(() => {
-  const verifySession = async () => {
-    const stored = localStorage.getItem("authUser");
-    if (!stored) {
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    const verifySession = async () => {
+      const stored = localStorage.getItem("authUser");
+      if (!stored) { setIsLoading(false); return; }
 
-    try {
-      const parsed: AuthUser = JSON.parse(stored);
-
-      // Verify token with server and get latest role
-      const res = await fetch(`${API_BASE}/users/me`, {
-        headers: { Authorization: `Bearer ${parsed.token}` },
-      });
-
-      if (!res.ok) {
-        // Token expired or invalid
-        localStorage.removeItem("authUser");
-        setIsLoading(false);
-        return;
-      }
-
-      const freshUser = await res.json();
-
-      // Update with latest role from DB
-      const updatedUser: AuthUser = {
-        ...parsed,
-        role: freshUser.role,
-        firstName: freshUser.firstName,
-        lastName: freshUser.lastName,
-      };
-
-      localStorage.setItem("authUser", JSON.stringify(updatedUser));
-      setUser(updatedUser);
-    } catch {
-      // Server unreachable — use cached data
       try {
         const parsed: AuthUser = JSON.parse(stored);
-        setUser(parsed);
-      } catch {
-        localStorage.removeItem("authUser");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        const res = await fetch(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${parsed.token}` },
+        });
 
-  verifySession();
-}, []);
+        if (!res.ok) {
+          localStorage.removeItem("authUser");
+          setIsLoading(false);
+          return;
+        }
+
+        const freshUser = await res.json();
+        const updatedUser: AuthUser = {
+          ...parsed,
+          role: freshUser.role,
+          firstName: freshUser.firstName,
+          lastName: freshUser.lastName,
+        };
+
+        localStorage.setItem("authUser", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+      } catch {
+        try {
+          const parsed: AuthUser = JSON.parse(stored);
+          setUser(parsed);
+        } catch {
+          localStorage.removeItem("authUser");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifySession();
+  }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -103,16 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Invalid credentials");
-    }
-
-    const authUser: AuthUser = data;
-    localStorage.setItem("authUser", JSON.stringify(authUser));
-    setUser(authUser);
+    if (!res.ok) throw new Error(data.message || "Invalid credentials");
+    localStorage.setItem("authUser", JSON.stringify(data));
+    setUser(data);
   }, []);
 
   const signUp = useCallback(async (formData: SignUpData) => {
@@ -129,16 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: formData.password,
       }),
     });
-
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to create account");
-    }
-
-    const authUser: AuthUser = data;
-    localStorage.setItem("authUser", JSON.stringify(authUser));
-    setUser(authUser);
+    if (!res.ok) throw new Error(data.message || "Failed to create account");
+    localStorage.setItem("authUser", JSON.stringify(data));
+    setUser(data);
   }, []);
 
   const signOut = useCallback(() => {
@@ -146,18 +126,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  // ← NEW: lets any page update the cached user without a full re-login
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem("authUser", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role: user?.role ?? null,
-        isAdmin: user?.role === "admin",
-        isLoading,
-        signIn,
-        signUp,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      role: user?.role ?? null,
+      isAdmin: user?.role === "admin",
+      isLoading,
+      signIn,
+      signUp,
+      signOut,
+      updateUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );
