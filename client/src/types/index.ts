@@ -25,6 +25,7 @@ export interface EventItem {
   tag?: string;
   status?: "Active" | "Upcoming" | "Draft";
   imageBg?: string;
+  thumbnail?: string; 
   buttonText?: string;
 }
 
@@ -41,6 +42,9 @@ export interface Event {
   directions?: string;
   price?: number;
   imageBg?: string;
+  thumbnail?: string;
+  banner?: string;
+  gallery?: string[];
   status?: "Active" | "Upcoming" | "Draft";
   organiser?: {
     _id: string;

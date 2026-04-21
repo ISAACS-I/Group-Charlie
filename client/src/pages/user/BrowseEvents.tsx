@@ -32,6 +32,7 @@ function toEventItem(e: Record<string, unknown>): EventItem {
     date:        e.date ? new Date(String(e.date)).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "",
     time:        String(e.time ?? ""),
     imageBg:     String(e.imageBg ?? "linear-gradient(135deg,#e0e7ff,#c7d2fe)"),
+    thumbnail:   (e as any).thumbnail ?? undefined,
     registered:  "",
     buttonText:  "Register Now",
   };

@@ -75,12 +75,22 @@ function MyEventCard({
       })
     : "No date set";
 
+  const thumbnailUrl = (event as any).thumbnail
+    ? `http://localhost:5001${(event as any).thumbnail}`
+    : null;
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
-      <div
-        className="h-36 w-full"
-        style={{ background: event.imageBg ?? "linear-gradient(135deg, #c7d2fe, #ddd6fe)" }}
-      />
+      <div className="h-36 w-full overflow-hidden">
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt={event.title} className="w-full h-full object-cover" />
+        ) : (
+          <div 
+            className="w-full h-full"
+            style={{ background: event.imageBg ?? "linear-gradient(135deg, #c7d2fe, #ddd6fe)" }}
+          />
+        )}
+      </div>
       <div className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs font-medium text-gray-400">{event.category}</span>

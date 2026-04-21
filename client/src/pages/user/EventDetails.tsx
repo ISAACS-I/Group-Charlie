@@ -12,190 +12,150 @@ import {
   isEventSaved,
 } from "../../utils/eventApi";
 
+const API_BASE = "http://localhost:5001/api";
+
+function getToken(): string {
+  try {
+    const stored = localStorage.getItem("authUser");
+    return stored ? JSON.parse(stored).token : "";
+  } catch { return ""; }
+}
+
+// Extend Event type locally to include image fields
+interface FullEvent extends Event {
+  thumbnail?: string;
+  banner?: string;
+  gallery?: string[];
+}
+
 export default function EventDetails() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isBooked, setIsBooked] = useState(false);
-
-  // Group booking states
-  const [members, setMembers] = useState<{ name: string; email: string }[]>([]);
-  const [showGroupForm, setShowGroupForm] = useState(false);
-  const [groupSent, setGroupSent] = useState(false);
-  const [groupError, setGroupError] = useState<string | null>(null);
-  const [isSending, setIsSending] = useState(false);
-
-  // Button states
-  const [isBooking, setIsBooking] = useState(false);
+  const [event,          setEvent]          = useState<FullEvent | null>(null);
+  const [loading,        setLoading]        = useState(true);
+  const [error,          setError]          = useState<string | null>(null);
+  const [isSaved,        setIsSaved]        = useState(false);
+  const [isBooked,       setIsBooked]       = useState(false);
+  const [isBooking,      setIsBooking]      = useState(false);
+  const [isSavingEvent,  setIsSavingEvent]  = useState(false);
   const [bookingMessage, setBookingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
 
-  // Fetch event on mount
+  // Group booking
+  const [members,       setMembers]       = useState<{ name: string; email: string }[]>([]);
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupSent,     setGroupSent]     = useState(false);
+  const [groupError,    setGroupError]    = useState<string | null>(null);
+  const [isSending,     setIsSending]     = useState(false);
+
+  // ─── Load event + saved/booked state ───────────────────────────────────────
   useEffect(() => {
-    const loadEvent = async () => {
-      if (!id) {
-        setError("Event ID not found");
-        setLoading(false);
-        return;
-      }
-
+    const load = async () => {
+      if (!id) { setError("Event ID not found"); setLoading(false); return; }
       try {
-        const data = await fetchEventById(id);
+        const data = await fetchEventById(id) as FullEvent;
         setEvent(data);
 
-        // Check if event is saved
         if (user) {
-          const saved = await isEventSaved(id);
+          const [saved, bookings] = await Promise.all([
+            isEventSaved(id),
+            fetch(`${API_BASE}/bookings/my`, {
+              headers: { Authorization: `Bearer ${getToken()}` },
+            }).then(r => r.json()),
+          ]);
           setIsSaved(saved);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setIsBooked(bookings.some((b: any) => {
+            const eventId = b.event?._id || b.event;
+            return String(eventId) === String(id);
+          }));
         }
       } catch (err) {
-        const error = err instanceof Error ? err.message : "Failed to load event details";
-        setError(error);
+        setError(err instanceof Error ? err.message : "Failed to load event details");
       } finally {
         setLoading(false);
       }
     };
-
-    loadEvent();
+    load();
   }, [id, user]);
 
-  const addMember = () => setMembers([...members, { name: "", email: "" }]);
-
-  const removeMember = (index: number) =>
-    setMembers(members.filter((_, i) => i !== index));
-
-  const updateMember = (index: number, field: string, value: string) => {
-    const updated = [...members];
-    updated[index] = { ...updated[index], [field]: value };
-    setMembers(updated);
-  };
-
+  // ─── Book ──────────────────────────────────────────────────────────────────
   const handleBookEvent = async () => {
-    if (!user) {
-      navigate("/login", { state: { from: `/browse-events/${id}` } });
-      return;
-    }
-
+    if (!user) { navigate("/login", { state: { from: `/browse-events/${id}` } }); return; }
     setIsBooking(true);
     setBookingMessage(null);
-
     try {
       await bookEvent(id!);
       setIsBooked(true);
       setBookingMessage({ type: "success", text: "Event booked successfully! Check your bookings." });
       setTimeout(() => setBookingMessage(null), 5000);
     } catch (err) {
-      const error = err instanceof Error ? err.message : "Failed to book event";
-      setBookingMessage({
-        type: "error",
-        text: error,
-      });
+      setBookingMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to book event" });
     } finally {
       setIsBooking(false);
     }
   };
 
+  // ─── Save / unsave ─────────────────────────────────────────────────────────
   const handleSaveEvent = async () => {
-    if (!user) {
-      navigate("/login", { state: { from: `/browse-events/${id}` } });
-      return;
-    }
-
+    if (!user) { navigate("/login", { state: { from: `/browse-events/${id}` } }); return; }
     setIsSavingEvent(true);
-
     try {
-      if (isSaved) {
-        await unsaveEvent(id!);
-        setIsSaved(false);
-      } else {
-        await saveEvent(id!);
-        setIsSaved(true);
-      }
+      if (isSaved) { await unsaveEvent(id!); setIsSaved(false); }
+      else          { await saveEvent(id!);   setIsSaved(true);  }
     } catch (err) {
-      const error = err instanceof Error ? err.message : "Failed to save event";
-      console.error("Error toggling save:", error);
+      console.error("Error toggling save:", err);
     } finally {
       setIsSavingEvent(false);
     }
   };
 
+  // ─── Group booking ─────────────────────────────────────────────────────────
   const handleGroupBooking = async () => {
-    const valid = members.every(m => m.name.trim() && m.email.trim());
-    if (!valid) {
+    if (!members.every(m => m.name.trim() && m.email.trim())) {
       setGroupError("Please fill in all name and email fields.");
       return;
     }
-
     setGroupError(null);
     setIsSending(true);
-
     try {
-      const authUser = JSON.parse(localStorage.getItem("authUser") || "{}");
-      const token = authUser.token;
-
-      if (!token) {
-        navigate("/login", { state: { from: `/browse-events/${id}` } });
-        return;
-      }
-
-      const res = await fetch("http://localhost:5001/api/bookings/group", {
+      const res = await fetch(`${API_BASE}/bookings/group`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
         body: JSON.stringify({ eventId: id, members }),
       });
-
       if (!res.ok) throw new Error("Failed to send group booking");
-
       setGroupSent(true);
       setMembers([]);
       setShowGroupForm(false);
       setTimeout(() => setGroupSent(false), 5000);
     } catch (err) {
-      const error = err instanceof Error ? err.message : "Failed to send group booking";
-      setGroupError(error);
+      setGroupError(err instanceof Error ? err.message : "Failed to send group booking");
     } finally {
       setIsSending(false);
     }
   };
 
-  // Loading state
+  // ─── Loading / error ───────────────────────────────────────────────────────
   if (loading) {
     return (
-      <DashboardLayout
-        title="Event Details"
-        subtitle="Loading event information..."
-        showSponsor
-      >
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <DashboardLayout title="Event Details" subtitle="Loading event information..." showSponsor>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
         </div>
       </DashboardLayout>
     );
   }
 
-  // Error state
   if (error || !event) {
     return (
-      <DashboardLayout
-        title="Event Details"
-        subtitle="Error loading event"
-        showSponsor
-      >
+      <DashboardLayout title="Event Details" subtitle="Error loading event" showSponsor>
         <div className="max-w-2xl mx-auto rounded-2xl border border-red-100 bg-red-50 p-6">
           <h3 className="text-lg font-bold text-red-900 mb-2">Unable to Load Event</h3>
           <p className="text-sm text-red-700 mb-4">{error || "Event not found"}</p>
-          <button
-            onClick={() => navigate("/browse-events")}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors"
-          >
+          <button onClick={() => navigate("/browse-events")}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">
             Back to Events
           </button>
         </div>
@@ -203,27 +163,32 @@ export default function EventDetails() {
     );
   }
 
-  const organiserName = event.organiser
-    ? `${event.organiser.firstName} ${event.organiser.lastName}`
-    : "Event Organiser";
+  const organiserName  = event.organiser ? `${event.organiser.firstName} ${event.organiser.lastName}` : "Event Organiser";
   const organiserEmail = event.organiser?.email || "";
   const organiserPhone = event.organiser?.phone || "";
 
+  // Build image URLs
+  const heroBg      = event.banner    ? `http://localhost:5001${event.banner}`    : null;
+  const thumbUrl    = event.thumbnail ? `http://localhost:5001${event.thumbnail}` : null;
+  const galleryUrls = (event.gallery ?? []).map(g => `http://localhost:5001${g}`);
+  const fallbackBg  = event.imageBg   ?? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+
   return (
-    <DashboardLayout
-      title="Event Details"
-      subtitle="Learn more about this event and complete your registration."
-      showSponsor
-    >
+    <DashboardLayout title="Event Details" subtitle="Learn more about this event and complete your registration." showSponsor>
+
       {/* Hero Banner */}
-      <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-8">
+      <section
+        className="relative mb-6 overflow-hidden rounded-2xl p-8"
+        style={{ background: heroBg ? `url(${heroBg}) center/cover no-repeat` : fallbackBg }}
+      >
+        {/* Dark overlay for readability when using a photo */}
+        {heroBg && <div className="absolute inset-0 bg-black/40 rounded-2xl" />}
         <div className="relative z-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
             {event.category || "Event"}
           </span>
           <h2 className="mt-2 text-4xl font-bold text-white">{event.title}</h2>
-          <p className="mt-2 text-sm text-indigo-100 max-w-2xl mb-6">{event.description}</p>
-
+          <p className="mt-2 text-sm text-white/80 max-w-2xl mb-6">{event.description}</p>
           <div className="flex flex-wrap gap-3">
             <div className="rounded-xl bg-white/20 px-4 py-2.5 backdrop-blur-sm border border-white/30">
               <p className="text-[10px] uppercase text-white/80">Registration</p>
@@ -239,29 +204,43 @@ export default function EventDetails() {
         <div className="absolute -right-4 top-16 h-24 w-24 rounded-full bg-white/10" />
       </section>
 
-      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
+
           {/* Photo Gallery */}
-          <div className="grid grid-cols-3 gap-2">
-            <div
-              className="col-span-2 h-56 rounded-2xl"
-              style={{
-                background: event.imageBg || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              }}
-            />
-            <div className="flex flex-col gap-2">
-              <div
-                className="flex-1 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }}
-              />
-              <div
-                className="flex-1 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}
-              />
+          {(thumbUrl || galleryUrls.length > 0) ? (
+            <div className="grid grid-cols-3 gap-2">
+              {/* Main image */}
+              <div className="col-span-2 h-56 rounded-2xl overflow-hidden">
+                {thumbUrl
+                  ? <img src={thumbUrl} alt={event.title} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full" style={{ background: fallbackBg }} />
+                }
+              </div>
+              {/* Gallery sidebar — show first 2, then a +N badge if more */}
+              <div className="flex flex-col gap-2">
+                {galleryUrls.slice(0, 2).map((url, i) => (
+                  <div key={i} className="flex-1 rounded-2xl overflow-hidden">
+                    <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                {galleryUrls.length === 0 && (
+                  <>
+                    <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" }} />
+                    <div className="flex-1 rounded-2xl" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }} />
+                  </>
+                )}
+                {galleryUrls.length > 2 && (
+                  <div className="flex-1 rounded-2xl bg-gray-900/80 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">+{galleryUrls.length - 2} more</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            // No images at all — show gradient banner
+            <div className="h-56 rounded-2xl" style={{ background: fallbackBg }} />
+          )}
 
           {/* About */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -273,26 +252,18 @@ export default function EventDetails() {
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-base font-bold text-gray-900 mb-5">Event Information</h3>
             {event.hasAgeRestriction && event.minAge && (
-              <InfoItem icon={<Users size={16} />} label="Age Requirement" value={`${event.minAge}+`} />
+              <div className="mb-4 rounded-xl bg-amber-50 border border-amber-100 px-4 py-2.5 text-xs text-amber-700">
+                This event is restricted to attendees aged {event.minAge} and above.
+              </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {event.date && (
-                <InfoItem icon={<Calendar size={16} />} label="Date" value={String(event.date).split("T")[0]} />
-              )}
-              {event.time && <InfoItem icon={<Clock size={16} />} label="Time" value={event.time} />}
-              {event.location && (
-                <InfoItem icon={<MapPin size={16} />} label="Venue" value={event.location} />
-              )}
-              {event.capacity && (
-                <InfoItem icon={<Users size={16} />} label="Capacity" value={`${event.capacity} Spots`} />
-              )}
-              {event.category && <InfoItem icon={<Tag size={16} />} label="Category" value={event.category} />}
+              {event.date     && <InfoItem icon={<Calendar size={16} />} label="Date"     value={new Date(event.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} />}
+              {event.time     && <InfoItem icon={<Clock size={16} />}    label="Time"     value={event.time} />}
+              {event.location && <InfoItem icon={<MapPin size={16} />}   label="Venue"    value={event.location} />}
+              {event.capacity && <InfoItem icon={<Users size={16} />}    label="Capacity" value={`${event.capacity} Spots`} />}
+              {event.category && <InfoItem icon={<Tag size={16} />}      label="Category" value={event.category} />}
               {typeof event.price === "number" && (
-                <InfoItem
-                  icon={<Wallet size={16} />}
-                  label="Entry Fee"
-                  value={event.price === 0 ? "Free" : `P${event.price}`}
-                />
+                <InfoItem icon={<Wallet size={16} />} label="Entry Fee" value={event.price === 0 ? "Free" : `P${event.price}`} />
               )}
               {event.directions && (
                 <div className="space-y-1 sm:col-span-2">
@@ -301,13 +272,12 @@ export default function EventDetails() {
                 </div>
               )}
             </div>
-
             {event.location && (
               <a
-                href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(event.location)}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800"
               >
                 <MapPin size={14} />
                 View on Google Maps
@@ -326,16 +296,8 @@ export default function EventDetails() {
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">{organiserName}</p>
                   <div className="mt-1 space-y-1 text-xs text-gray-400">
-                    <span className="flex items-center gap-2">
-                      <Mail size={12} />
-                      {organiserEmail}
-                    </span>
-                    {organiserPhone && (
-                      <span className="flex items-center gap-2">
-                        <Phone size={12} />
-                        {organiserPhone}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-2"><Mail size={12} />{organiserEmail}</span>
+                    {organiserPhone && <span className="flex items-center gap-2"><Phone size={12} />{organiserPhone}</span>}
                   </div>
                 </div>
               </div>
@@ -343,7 +305,7 @@ export default function EventDetails() {
           )}
         </div>
 
-        {/* Right Column — Registration Sidebar */}
+        {/* Registration Sidebar */}
         <div>
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sticky top-6">
             <span className="rounded-md bg-green-100 px-2 py-1 text-[10px] font-bold uppercase text-green-700">
@@ -370,13 +332,11 @@ export default function EventDetails() {
             </div>
 
             {bookingMessage && (
-              <div
-                className={`mt-4 rounded-xl border px-4 py-3 text-xs font-medium ${
-                  bookingMessage.type === "success"
-                    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                    : "border-red-100 bg-red-50 text-red-700"
-                }`}
-              >
+              <div className={`mt-4 rounded-xl border px-4 py-3 text-xs font-medium ${
+                bookingMessage.type === "success"
+                  ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                  : "border-red-100 bg-red-50 text-red-700"
+              }`}>
                 {bookingMessage.type === "success" ? "✓" : "✕"} {bookingMessage.text}
               </div>
             )}
@@ -388,11 +348,6 @@ export default function EventDetails() {
             )}
 
             <div className="mt-5 space-y-3">
-              {event.hasAgeRestriction && event.minAge && (
-                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-100 px-4 py-2.5 text-xs text-amber-700">
-                  This event is restricted to attendees aged {event.minAge} and above.
-                </div>
-              )}
               <button
                 type="button"
                 onClick={handleBookEvent}
@@ -410,9 +365,7 @@ export default function EventDetails() {
                 onClick={handleSaveEvent}
                 disabled={isSavingEvent}
                 className={`w-full rounded-xl py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-                  isSaved
-                    ? "bg-pink-100 text-pink-600 hover:bg-pink-200"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  isSaved ? "bg-pink-100 text-pink-600 hover:bg-pink-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 } disabled:opacity-50`}
               >
                 <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
@@ -425,7 +378,7 @@ export default function EventDetails() {
               <button
                 type="button"
                 onClick={() => setShowGroupForm(!showGroupForm)}
-                className="w-full rounded-xl border border-indigo-200 py-2.5 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50"
+                className="w-full rounded-xl border border-indigo-200 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50"
               >
                 {showGroupForm ? "Hide Group Booking" : "Registering as a group?"}
               </button>
@@ -435,57 +388,32 @@ export default function EventDetails() {
                   <p className="text-xs text-gray-400">
                     Add each person's details. They will each receive their own QR pass via email.
                   </p>
-
                   {members.map((member, index) => (
                     <div key={index} className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-gray-600">Person {index + 1}</p>
-                        <button
-                          type="button"
-                          onClick={() => removeMember(index)}
-                          className="text-red-400 hover:text-red-600 transition-colors"
-                        >
+                        <button type="button" onClick={() => setMembers(members.filter((_, i) => i !== index))}
+                          className="text-red-400 hover:text-red-600">
                           <X size={14} />
                         </button>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Full Name"
-                        value={member.name}
-                        onChange={(e) => updateMember(index, "name", e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email Address"
-                        value={member.email}
-                        onChange={(e) => updateMember(index, "email", e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                      />
+                      <input type="text" placeholder="Full Name" value={member.name}
+                        onChange={(e) => { const u = [...members]; u[index].name = e.target.value; setMembers(u); }}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                      <input type="email" placeholder="Email Address" value={member.email}
+                        onChange={(e) => { const u = [...members]; u[index].email = e.target.value; setMembers(u); }}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
                     </div>
                   ))}
-
                   {groupError && <p className="text-xs text-red-500">{groupError}</p>}
-
-                  <button
-                    type="button"
-                    onClick={addMember}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-indigo-300 hover:text-indigo-600"
-                  >
-                    <Plus size={14} />
-                    Add Person
+                  <button type="button" onClick={() => setMembers([...members, { name: "", email: "" }])}
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 hover:border-indigo-300 hover:text-indigo-600">
+                    <Plus size={14} /> Add Person
                   </button>
-
                   {members.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleGroupBooking}
-                      disabled={isSending}
-                      className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                      {isSending
-                        ? "Sending..."
-                        : `Send QR Passes (${members.length} ${members.length === 1 ? "person" : "people"})`}
+                    <button type="button" onClick={handleGroupBooking} disabled={isSending}
+                      className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50">
+                      {isSending ? "Sending..." : `Send QR Passes (${members.length} ${members.length === 1 ? "person" : "people"})`}
                     </button>
                   )}
                 </div>

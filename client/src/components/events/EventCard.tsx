@@ -15,25 +15,39 @@ export default function EventCard({
   location,
   tag,
   imageBg,
+  thumbnail,
   buttonText = "View Event",
   onAction,
 }: EventCardProps) {
   const badgeLabel = status ?? category ?? "";
   const badgeVariant =
-    status === "Active" ? "active" :
+    status === "Active"   ? "active"   :
     status === "Upcoming" ? "upcoming" :
-    status === "Draft" ? "draft" :
+    status === "Draft"    ? "draft"    :
     "category";
+
+  const imageUrl = thumbnail
+    ? `http://localhost:5001${thumbnail}`
+    : null;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
       {/* Image area */}
-      <div
-        className="h-44 w-full flex-shrink-0"
-        style={{ background: imageBg ?? "linear-gradient(135deg, #e0e7ff, #c7d2fe)" }}
-      >
+      <div className="h-44 w-full flex-shrink-0 relative overflow-hidden">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className="w-full h-full"
+            style={{ background: imageBg ?? "linear-gradient(135deg, #e0e7ff, #c7d2fe)" }}
+          />
+        )}
         {tag && (
-          <div className="p-3">
+          <div className="absolute top-3 left-3">
             <Badge label={tag} variant="tag" />
           </div>
         )}
@@ -55,7 +69,7 @@ export default function EventCard({
         )}
 
         <div className="mt-auto space-y-1">
-          {date && <p className="text-xs text-gray-400">{date}</p>}
+          {date     && <p className="text-xs text-gray-400">{date}</p>}
           {location && <p className="text-xs text-gray-400">{location}</p>}
         </div>
 

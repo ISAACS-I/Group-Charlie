@@ -20,6 +20,7 @@ function toEventItem(e: Event): EventItem {
                    : "",
     time:        e.time    ?? "",
     imageBg:     e.imageBg ?? "linear-gradient(135deg,#e0e7ff,#c7d2fe)",
+    thumbnail:   (e as any).thumbnail ?? undefined,
     registered:  "",
     buttonText:  "Register Now",
   };

@@ -63,23 +63,34 @@ router.get('/my', protect, async (req, res) => {
   }
 });
 
-// DELETE /api/bookings/:id
-// Cancel a booking
-router.delete('/:id', protect, async (req, res) => {
+// GET /api/bookings/attendees
+// Get all attendees across all events owned by the logged-in organiser
+router.get('/attendees', protect, async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    // Get all events owned by this organiser
+    const events = await Event.find({ organiser: req.user._id }).select('_id title');
+    const eventIds = events.map(e => e._id);
 
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
+    // Get all bookings for those events
+    const bookings = await Booking.find({ event: { $in: eventIds } })
+      .populate('user',  'firstName lastName email')
+      .populate('event', 'title')
+      .sort({ createdAt: -1 });
 
-    if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to cancel this booking' });
-    }
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-    await Booking.findByIdAndDelete(req.params.id);
-
-    res.json({ message: 'Booking cancelled successfully' });
+// GET /api/bookings/event/:eventId
+// Get all bookings for a specific event (organiser only)
+router.get('/event/:eventId', protect, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ event: req.params.eventId })
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+    res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -123,7 +134,7 @@ router.post('/group', protect, async (req, res) => {
   }
 });
 
-// GET /api/bookings/group/my
+// GET /api/bookings/group
 // Get user's group bookings
 router.get('/group/my', protect, async (req, res) => {
   try {
@@ -136,5 +147,33 @@ router.get('/group/my', protect, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// DELETE /api/bookings/:id
+// Cancel a booking
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to cancel this booking' });
+    }
+
+    await Booking.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Booking cancelled successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
+
+
+
 
 module.exports = router;
