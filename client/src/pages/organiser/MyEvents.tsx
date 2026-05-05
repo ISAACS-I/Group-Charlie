@@ -15,11 +15,18 @@ function getToken(): string {
 type TabStatus = "Upcoming" | "Past Events" | "Drafts" | "Cancelled";
 
 // Map DB status → tab
-function getTab(status: string | undefined, date: string | undefined): TabStatus {
-  if (status === "Draft")    return "Drafts";
+function getTab(status: string | undefined, date: string | undefined, time?: string): TabStatus {
+  if (status === "Draft") return "Drafts";
   if (status === "Active" || status === "Upcoming") {
-    const isPast = date ? new Date(date) < new Date() : false;
-    return isPast ? "Past Events" : "Upcoming";
+    if (!date) return "Upcoming";
+    const eventDate = new Date(date);
+    if (time) {
+      const [hours, minutes] = time.split(":").map(Number);
+      eventDate.setHours(hours, minutes, 0, 0);
+    } else {
+      eventDate.setHours(23, 59, 59, 999);
+    }
+    return eventDate < new Date() ? "Past Events" : "Upcoming";
   }
   return "Cancelled";
 }
@@ -142,7 +149,7 @@ export default function MyEventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [sortOption,      setSortOption]      = useState("Sort by Date");
 
-  // ─── Fetch organiser's events ─────────────────────────────────────────────
+  // Fetch organiser's events 
   const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -166,24 +173,24 @@ export default function MyEventsPage() {
   const handleDelete = (id: string) =>
     setEvents(prev => prev.filter(e => e._id !== id));
 
-  // ─── Tab counts ───────────────────────────────────────────────────────────
+  // Tab counts 
   const tabCounts = useMemo(() => ({
-    "Upcoming":    events.filter(e => getTab(e.status, String(e.date)) === "Upcoming").length,
-    "Past Events": events.filter(e => getTab(e.status, String(e.date)) === "Past Events").length,
-    "Drafts":      events.filter(e => getTab(e.status, String(e.date)) === "Drafts").length,
-    "Cancelled":   events.filter(e => getTab(e.status, String(e.date)) === "Cancelled").length,
-  }), [events]);
+  "Upcoming":    events.filter(e => getTab(e.status, String(e.date), e.time) === "Upcoming").length,
+  "Past Events": events.filter(e => getTab(e.status, String(e.date), e.time) === "Past Events").length,
+  "Drafts":      events.filter(e => getTab(e.status, String(e.date), e.time) === "Drafts").length,
+  "Cancelled":   events.filter(e => getTab(e.status, String(e.date), e.time) === "Cancelled").length,
+}), [events]);
 
-  // ─── Category options from real data ─────────────────────────────────────
+  // Category options from real data 
   const categoryOptions = useMemo(() => {
     const unique = new Set(events.map(e => e.category).filter(Boolean));
     return ["All Categories", ...Array.from(unique)] as string[];
   }, [events]);
 
-  // ─── Filtered + sorted events ─────────────────────────────────────────────
+  // Filtered + sorted events 
   const filteredEvents = useMemo(() => {
     let result = events.filter(e => {
-      const tab = getTab(e.status, String(e.date));
+      const tab = getTab(e.status, String(e.date), e.time);
       const matchesTab      = tab === activeTab;
       const matchesSearch   = !searchTerm ||
         e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
